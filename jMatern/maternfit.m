@@ -303,8 +303,8 @@ function [structout] = maternfit(varargin)
 %   summed over all frequencies used in the fit, and divided by the sum of 
 %   the squared natural log of the periodogram over the same frequencies.
 %
-%   The error is computed over the inertial side, anti-inertial side, or 
-%   both sides, depending on which frequency range is used for the fit. 
+%   The error is computed over the positive side, negative side, or both
+%   sides, depending on which frequency range is used for the fit. 
 %
 %   When the 'difference' behavior is employed, as is the default, ERR will
 %   reflect the error between the periodogram of the first difference of 
@@ -420,7 +420,7 @@ varargin=varargin(3:end);
 %--------------------------------------------------------------------------
 %Sorting out input options 
 
-opts.side='both';            %Determines side: opposite, same, or both
+opts.side='both';            %Determines side: positive, negative, or both
 opts.alg='bnd';              %Algorithm: bnd, con, or nlopt
 opts.ver='difference';       %Fit version: difference or raw
 opts.cores='serial';         %Serial or parallel computation
@@ -895,7 +895,7 @@ for i=1:size(x,1)
 end
 
 % Compute the value of the AICC information criterion
-if (strcmpi(opts.side(1:3),'opp')||strcmpi(opts.side(1:3),'sam'))
+if (strcmpi(opts.side(1:3),'pos')||strcmpi(opts.side(1:3),'neg'))
     M=length(a:b);
 else
     M=length(a:b)+length(indexn);
@@ -906,11 +906,11 @@ aicc=2*like + frac(4*M*P,2*M-P-1);
 %vlines(f(a)),vlines(f(b))
 
 %Compute an error measure
-if strcmpi(opts.side(1:3),'sam')
+if strcmpi(opts.side(1:3),'pos')
     numer=sum(squared(log(spp(a:b))-log(Spp(a:b))));
     denom=sum(squared(log(spp(a:b))));
     err=frac(numer,denom);
-elseif strcmpi(opts.side(1:3),'opp')
+elseif strcmpi(opts.side(1:3),'neg')
     numer=sum(squared(log(snn(a:b))-log(Snn(a:b))));
     denom=sum(squared(log(snn(a:b))));
     err=frac(numer,denom);
@@ -1041,6 +1041,27 @@ bool(2)=aresame(fit.alpha,fit2.alpha,1e-4);
 bool(3)=aresame(fit.lambda,fit2.lambda,1e-4);
 
 reporttest('MATERNFIT is independent of initial guess',allall(bool))
+
+%Negative-side noise makes the two sides differ
+W=fft(randn(1000,1)+1i*randn(1000,1));
+W(1:501)=0;
+zs=z+ifft(W);
+clear bool
+sides={'positive','negative'};
+for i=1:2
+    fit3=maternfit(dt,zs,frac(1,2)*pi,sides{i});
+    [tau,R]=materncov(dt,1000,fit3.sigma,fit3.alpha,fit3.lambda);
+    [f,Spp,Snn]=blurspec(dt,R,'difference');
+    [om,spp,snn]=mspec(dt,diff(zs),[]);
+    if i==2
+        spp=snn;
+        Spp=Snn;
+    end
+    a=fit3.params.a;b=fit3.params.b;P=fit3.params.P;M=b-a+1;
+    err=sum(squared(log(spp(a:b))-log(Spp(a:b))))./sum(squared(log(spp(a:b))));
+    bool(i)=aresame(fit3.params.err,err,1e-6)&&aresame(fit3.params.aicc,2*fit3.params.like+frac(4*M*P,2*M-P-1),1e-6);
+end
+reporttest('MATERNFIT one-sided fits use only the selected side for AICC and ERR',allall(bool))
 
 rng(0);
 epsilono=2;
