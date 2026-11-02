@@ -100,6 +100,7 @@ if strcmpi(str(1:3),'spe')
         [cv,zeta,n,s,p]=psi2fields_spectral_loop(dx,psi);
     elseif strcmpi(algstr(1:3),'fas')
         %We don't actually need to loop, since fft2 is smart
+        %(but ifft2 with 'symmetric' is not, see PSI2FIELDS_IFFT2)
         %Not really much faster though
         [cv,zeta,n,s,p]=psi2fields_spectral(dx,psi,nargout);
     end
@@ -160,24 +161,31 @@ Psi=fft2(psi);
 
 U=-l.*Psi*sqrt(-1);
 V=k.*Psi*sqrt(-1);
-cv=ifft2(U,'symmetric')+sqrt(-1)*ifft2(V,'symmetric');
+cv=psi2fields_ifft2(U)+sqrt(-1)*psi2fields_ifft2(V);
 cv=100*cv;%Convert to cm/s
 
 if na>1
     Zeta=k.*V*sqrt(-1)-l.*U*sqrt(-1);
-    zeta=ifft2(Zeta,'symmetric');
+    zeta=psi2fields_ifft2(Zeta);
 end
 if na>2
     N=k.*U*sqrt(-1)-l.*V*sqrt(-1);
-    n=ifft2(N,'symmetric');
+    n=psi2fields_ifft2(N);
 end
 if na>3
     S=k.*V*sqrt(-1)+l.*U*sqrt(-1);
-    s=ifft2(S,'symmetric');
+    s=psi2fields_ifft2(S);
 end
 
 if na>4
     p=(s.^2+n.^2)-zeta.^2;
+end
+
+function[x]=psi2fields_ifft2(X)
+%IFFT2 with 'symmetric' does not act page by page for N-D arrays, so loop
+x=zeros(size(X));
+for i=1:size(X,3)*size(X,4)
+    x(:,:,i)=ifft2(X(:,:,i),'symmetric');
 end
 
 
@@ -317,6 +325,17 @@ bool(4)=sum(abs(S(:)-S2(:)).^2)<sum(abs(S(:)).^2)/1e6;
 bool(5)=sum(abs(P(:)-P2(:)).^2)<sum(abs(P(:)).^2)/1e6;
 
 reporttest('PSI2FIELDS loop and loopless calculations match to 1 part in 10^6 for QGSNAPSHOT',allall(bool))
+
+rng(1);
+xx=randn(8,8,2,3);
+[cv,zeta,N,S,P]=psi2fields(1,xx,'loop');
+[cv2,zeta2,N2,S2,P2]=psi2fields(1,xx,'fast');
+bool(1)=maxmax(abs(cv-cv2))<1e-10*maxmax(abs(cv));
+bool(2)=maxmax(abs(zeta-zeta2))<1e-10*maxmax(abs(zeta));
+bool(3)=maxmax(abs(N-N2))<1e-10*maxmax(abs(N));
+bool(4)=maxmax(abs(S-S2))<1e-10*maxmax(abs(S));
+bool(5)=maxmax(abs(P-P2))<1e-10*maxmax(abs(P));
+reporttest('PSI2FIELDS loop and loopless calculations match for random 4-D PSI',allall(bool))
 
 [cv,zeta,N,S,P]=psi2fields(dx,qgsnapshot.psi);
 bool=sum(abs(zeta(:)-qgsnapshot.zeta(:)).^2)<sum(abs(zeta(:)).^2)/1e9;
