@@ -23,8 +23,7 @@ function[v,psi,zeta,psif]=simpleddy(varargin)
 %         SIMPLEDDY(R,RO,VO,'rankine')        -- Rankine vortex   [default]
 %         SIMPLEDDY(R,RO,VO,'gaussian')       -- Gaussian vortex
 %
-%   RO, VO, and the shape parameter ALPHA may then each be either scalars
-%   or arrays of the same length. 
+%   RO and VO may then each be either scalars or arrays of the same length. 
 %   _______________________________________________________________________
 % 
 %   Eddy 'slices'
@@ -40,6 +39,7 @@ function[v,psi,zeta,psif]=simpleddy(varargin)
 %   and vorticity observed along this curve.  
 %   _______________________________________________________________________
 %
+%   'simpleddy --t' runs a test.
 %   'simpleddy --f' makes some sample figures.
 %
 %   Usage: [v,psi,zeta]=simpleddy(r,RO,VO);
@@ -49,24 +49,16 @@ function[v,psi,zeta,psif]=simpleddy(varargin)
 %   (C) 2015--2020 J.M. Lilly --- type 'help jlab_license' for details
  
 
-%         SIMPLEDDY(R,RO,VO,'matern',ALPHA)   -- Matern vortex
-%
-%   The Matern family is described by an additional shape parameter, 
-%   termed ALPHA.  This parameter must be ALPHA>1/2, with the Matern family
-%   becoming increasingly similar to a Gaussian as ALPHA increases.
-
-%   See also MATERNFUN, EDDYCURVE, EDDYFIT, EDDYGUESS.
+%   See also EDDYCURVE, EDDYFIT, EDDYGUESS.
 
 
 
 %   XXX what if X has more than one column.  
-%          [v,psi,zeta]=simpleddy(r,RO,VO,'matern',ALPHA);
 
 
 if strcmpi(varargin{1}, '--f')
     rankineddy_fig
     gaussian_fig
-    %materneddy_figures
     return
 end
 
@@ -95,8 +87,6 @@ if nargin>3
              alpha=1;
         elseif alpha==inf
             eddystr='gaussian';
-        elseif alpha>1/2
-            eddystr='matern';
         else
             error(['Sorry, the value ALPHA=' num2str(alpha) ' is not supported.'])
         end
@@ -113,12 +103,12 @@ if nargin>3
 end
 
 vo=vo/100/1000;
-if strcmpi(eddystr(1:3),'mat')
-    [v,psi,zeta]=materneddy(alpha,ro,vo,abs(x));
-elseif strcmpi(eddystr(1:3),'gau')
+if strcmpi(eddystr(1:3),'gau')
     [v,psi,zeta]=gaussianeddy(ro,vo,abs(x));
 elseif strcmpi(eddystr(1:3),'ran')
     [v,psi,zeta]=rankineddy(alpha,ro,vo,abs(x));
+else
+    error(['Sorry, the eddy model ''' eddystr ''' is not supported.'])
 end
 
 
@@ -214,144 +204,6 @@ psi=-1.*vo.*ro.*exp(1/2.*(1-r.^2./ro.^2));
 v=100*1000*r.*(vo./ro).*exp(1/2.*(1-r.^2./ro.^2));
 zeta=(vo./ro).*(2-r.^2./ro.^2).*exp(1/2.*(1-r.^2./ro.^2));
 
-function[v,psi,zeta]=materneddy(alpha,R,V,r)
-%MATERNEDDY
-%
-%   MATERNEDDY
-%
-%   Usage: []=materneddy();
-%   __________________________________________________________________
-%   This is part of JLAB --- type 'help jlab' for more information
-%   (C) 2011--2012 J.M. Lilly --- type 'help jlab_license' for details
- 
-%vsize(R,V,alpha,r)
-%vsize(R,V,alpha,r)
-%Halpha=gamma(alpha).*(2.^(alpha-1));  
-%Don't need this because I only need the ratio H/Halpha
-
-%figure,plot(abs(r(:)))
-%alpha
-%R
-%V
-%maternfun(alpha-1,maternrad(alpha))
-%maternrad(alpha)
-alpha=alpha(:);
-%R
-
-%vcolon(R,V,alpha);
-R=R(:)';
-V=V(:)';
-alpha=alpha(:)';
-
-c=-frac(maternrad(alpha).^2,R).*maternfun(alpha-1,maternrad(alpha))';
-%vsize(V,c)
-Hnorm=frac(V,c);
-%xx=maternrad(alpha);
-%figure,plot(xx(:));
-Rnorm=R./maternrad(alpha);
-%vsize(Rnorm,alpha,r)
-
-%size(Rnorm)
-%size(Hnorm)
-
-
-if ~aresame(size(alpha),size(r))
-    if size(r,2)==1&&(length(alpha)~=1)
-        r=vrep(r,length(alpha),2); 
-    end
-    if size(r,1)~=1&&(length(alpha)~=1)
-        Rnorm=vrep(Rnorm,size(r,1),1);
-        Hnorm=vrep(Hnorm,size(r,1),1);   
-    end
-end
-
-%figure,plot(abs(Rnorm(:)),'.')
-%figure,plot(abs(Hnorm(:)))
-%figure,plot(abs(alpha(:)))
-%vsize(r,Rnorm,alpha)
-
-v=-100*1000*Hnorm.*r.*(1./Rnorm.^2).*maternfun(alpha-1,r./Rnorm);
-
-if nargout >=2
-    psi=Hnorm.*maternfun(alpha,r./Rnorm);
-end
-if nargout ==3
-    zeta= Hnorm.*(1./Rnorm.^2).*((r./Rnorm).^2.*maternfun(alpha-2,r./Rnorm)-2*maternfun(alpha-1,r./Rnorm));
-end
-
-
-function[]=materneddy_figures
-dr=0.1;
-r=[0:dr:500]';
-%alpha=[1/2:1/4:10];
-%alpha=logspace(log10(1.05),log10(25),10);
-alpha=logspace(log10(3/4),log10(50),10);
-alpha=([1.2:.2:2 3:2:11]);
-[v,psi,zeta]=simpleddy(r,10,15,'matern',alpha);
-[vo,psio,zetao]=simpleddy(r,10,15,'gaussian');
-%[vo,psio,zetao]=simpleddy(r,10,15,'rankine');
-
-psi=[psio psi];
-v=[vo v];
-zeta=[zetao zeta];
-
-c=frac(maternfun(alpha-1,maternrad(alpha)),maternfun(alpha-1,0));
-c=[1 c.*sqrt(exp(1))];
-for i=1:length(c)
-    psi(:,i)=psi(:,i).*c(i);
-    v(:,i)=v(:,i).*c(i);
-    zeta(:,i)=zeta(:,i).*c(i);
-end
-
-psitwosides=[flipud(psi);psi(2:end,:)];
-Psi=abs(fft(psitwosides));
-%[mu,sigma,skew,kurt]=pdfprops(1:length(Psi),psitwosides(:,[2:end 1]));
-%[muf,sigmaf,skewf,kurtf]=pdfprops(1:length(Psi),fftshift(Psi(:,[2:end 1])));
-
-f=fourier(length(Psi));
-Psi=Psi(1:length(r),:);
-
-figure
-subplot(2,2,1),h=plot(r,psi);vlines(10,'k:'), xlim([0 50]),
-h1=h(1);h=h(2:end);title('Streamfunction'),xlabel('Distance')
-linestyle -h h1 -4K
-linestyle -h h default
-subplot(2,2,2),h=plot(r,v);vlines(10,'k:'),ylim([0 15.5]), xlim([0 50])
-h1=h(1);h=h(2:end);title('Velocity'),xlabel('Distance')
-linestyle -h h1 -4K 
-linestyle -h h default
-subplot(2,2,3),h=plot(r,zeta);vlines(10,'k:'),hlines(0,'k:'),ylim([-1 5.1]/1e5), xlim([0 50])
-h1=h(1);h=h(2:end);title('Vorticity'),xlabel('Distance')
-linestyle -h h1 -4K
-linestyle -h h default
-subplot(2,2,4),h=plot(f./dr,Psi);xlog,ylog,ylim(10.^[-6 1]),vlines(1./10,'k:'),xlim([minmin(f./dr) maxmax(f./dr)])
-h1=h(1);h=h(2:end);title('Spectrum'),xlabel('Radian Wavenumber')
-linestyle -h h1 -4K
-linestyle -h h default
-%letterlabels(2)
-
-fontsize 14 12 12 12
-orient landscape
-%print -depsc materneddies_core.eps
-
-
-alpha=logspace(log10(3/4),log10(25),100);
-figure,
-plot(alpha,frac(maternfun(alpha-1,maternrad(alpha)),maternfun(alpha-1,0)))
-linestyle -2k
-hlines(1./sqrt(exp(1)),'k:')
-title('Rossby Number Ratio'),xlabel('Shape Parameter \alpha'),xlim([0 25])
-fontsize 14 12 12 12
-orient portrait
-%print -depsc rossbyratio.eps
-
-%A la McWilliams
-figure
-h=plot((r./10).^2,abs(v));vlines(10,'k:'),hlines(0,'k:'),xlim([0 25]),ylog
-h1=h(1);h=h(2:end);title('Velocity'),xlabel('Distance Squared'),ylim([.1 15])
-orient portrait
-
-
 function[]=simpleddy_test
 
 x=[-100:.1:100]';
@@ -364,10 +216,22 @@ end
 Ro=10;
 Vo=15;
 
-bool(1)=aresame(simpleddy(cx,Ro,Vo,'matern',.75),simpleddy(cx,Ro,Vo,.75));
-bool(2)=aresame(simpleddy(cx,Ro,Vo,'gaussian'),simpleddy(cx,Ro,Vo,inf));
-bool(3)=aresame(simpleddy(cx,Ro,Vo,'rankine'),simpleddy(cx,Ro,Vo,0));
+bool(1)=aresame(simpleddy(cx,Ro,Vo,'gaussian'),simpleddy(cx,Ro,Vo,inf));
+bool(2)=aresame(simpleddy(cx,Ro,Vo,'rankine'),simpleddy(cx,Ro,Vo,0));
 reporttest('SIMPLEDDY alternate input format matches string format',all(bool))
+
+bool=false(1,2);
+try
+    simpleddy(cx,Ro,Vo,'matern',.75);
+catch
+    bool(1)=true;
+end
+try
+    simpleddy(cx,Ro,Vo,.75);
+catch
+    bool(2)=true;
+end
+reporttest('SIMPLEDDY unsupported Matern eddy gives an error',all(bool))
 
 function[]=eddyslice_figures
 
@@ -382,14 +246,8 @@ Ro=10;
 Vo=15;
 
 
-%[cv,psi,zeta]=simpleddy(cx,Ro,Vo,'gaussian');
+[cv,psi,zeta]=simpleddy(cx,Ro,Vo,'gaussian');
 %[cv,psi,zeta]=simpleddy(cx,Ro,Vo,inf);
-
-[cv,psi,zeta]=simpleddy(cx,Ro,Vo,'matern',.75);
-
-%[cv,psi,zeta]=simpleddy(cx,Ro,Vo,'matern',1/2);
-%[cv,psi,zeta]=simpleddy(cx,Ro,Vo,'matern',1);
-%[cv,psi,zeta]=simpleddy(cx,Ro,Vo,'matern',2);
 %[cv,psi,zeta]=simpleddy(cx,Ro,Vo);
 
 figure,
@@ -401,45 +259,6 @@ subplot(2,2,3),plot(x,real(cv)),vlines([-Ro Ro],'k:');hlines(0,'k:');
 title('Along-Stream Currents')
 subplot(2,2,4),plot(x,imag(cv)),vlines([-Ro Ro],'k:');hlines(0,'k:');
 title('Cross-Stream Currents')
-
-% 
-% x=[-20:.1:20]';
-% [xg,yg]=meshgrid(x,x);
-% [cv,psi,zeta]=simpleddy(xg+sqrt(-1)*yg,Ro,Vo,'matern',1);
-
-function[]=manyeddy_fig
-ro=10;
-vo=-10;
-dx=0.1
-eta=osum((-500:dx:500)', sqrt(-1)*(0:1:50)');
-[taper,lambda]=sleptap(length(eta),4); 
-
-
-N=size(taper,1);
-[v,psi]=simpleddy(eta,ro,vo,'matern',1);
-[f,s]=mspec(.1,psi,ones(N,1)./sqrt(N)); 
-[v,psi]=simpleddy(eta,ro,vo,'matern',2);
-[f(:,:,2),s(:,:,2)]=mspec(.1,psi,ones(N,1)./sqrt(N)); 
-[v,psi]=simpleddy(eta,ro,vo,'matern',4);
-[f(:,:,3),s(:,:,3)]=mspec(.1,psi,ones(N,1)./sqrt(N)); 
-[v,psi]=simpleddy(eta,ro,vo,'matern',8);
-[f(:,:,4),s(:,:,4)]=mspec(.1,psi,ones(N,1)./sqrt(N)); 
-[v,psi]=simpleddy(eta,ro,vo,'matern',16);
-[f(:,:,5),s(:,:,5)]=mspec(.1,psi,ones(N,1)./sqrt(N)); 
-[v,psi]=simpleddy(eta,ro,vo,'gaussian');
-[f(:,:,6),s(:,:,6)]=mspec(.1,psi,ones(N,1)./sqrt(N)); 
-
-
-figure
-for i=1:6
-subplot(3,2,i)
-plot(f(:,:,i),s(:,:,i)),xlog,ylog,hold on,linestyle D,
-xlim([2*pi/1000 2*pi/1]),ylim([10^(-30) 10^(-4)]),
-h=plot(f(:,:,i),vmean(s(:,:,i),2));linestyle -h h 2k
-vlines(2*pi/10,'g')
-end
-
-packfig(3,2)
 
 
 function[]=gaussian_fig
