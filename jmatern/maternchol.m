@@ -71,10 +71,10 @@ lambda=varargin{5};
 mu=0*alpha;
 nu=0*alpha;
 
-if nargin>5
+if length(varargin)>5
     mu=varargin{6};%could be gamma instead if it's the generalized matern model
 end
-if nargin>6
+if length(varargin)>6
     nu=varargin{7};
 end
 
@@ -172,6 +172,15 @@ t2=tic;C2 = fbm_matrix(1,N,1,alpha,'fast');etime2=toc(t2);
 
 reporttest('MATERNCHOL loop and loopless algorithms match for fBM', aresame(C1./C2,ones(size(C1)),1e-10))
 %disp(['Loopless algorithm was ' num2str(etime1./etime2) ' times faster than loop.'])
+
+T=maternchol(1,40,2,1.5,0.1,1,'extended');
+[tau,R]=materncov(1,40,2,1.5,0.1,1,'extended');
+b1=aresame(T*T',conj(toeplitz(R)),1e-8);
+T=maternchol(1,40,2,1.5,0.1,0.5,'general');
+[tau,R]=materncov(1,40,2,1.5,0.1,0.5,'general');
+b2=aresame(T*T',conj(toeplitz(R)),1e-8);
+b3=aresame(maternchol(1,40,2,1.5,0.1,'standard'),maternchol(1,40,2,1.5,0.1),1e-15);
+reporttest('MATERNCHOL model string after numeric arguments', b1&&b2&&b3)
 
 %alpha=0.505+rand(1,N/2)/1.1;%min(alpha),max(alpha)
 alpha=1+rand(1,N/2)/1.1;%min(alpha),max(alpha)
