@@ -63,6 +63,8 @@ for i=1:length(varargin)
     for j=1:length(varargin{1})
         if ~anyany(bool{j})
             varargout{i,1}{j,1}=[]; 
+        elseif size(bool{j},1)==1
+            varargout{i,1}{j,1}=varargin{i}{j}(bool{j});
         else
             varargout{i,1}{j,1}=varargin{i}{j}(bool{j},:);
         end
@@ -133,6 +135,16 @@ y1{6}=[]';
 
 cellpack(x,y);
 reporttest('CELLPACK',aresame(x1,x)&&aresame(y1,y))
+
+clear x y
+x{1}=[1 2 inf 4 inf]';x{2}=[inf 2 3]';x{3}=[1 2];x{4}=[];
+y{1}=[1 2 4]';y{2}=[2 3]';y{3}=[1 2];y{4}=[];
+x=cellpack(x);
+reporttest('CELLPACK help example with row vector',aresame(x,y'))
+
+x={[1 inf 3]};y={[1 2 3]};
+[x,y]=cellpack(x,y);
+reporttest('CELLPACK row vectors, multiple inputs',aresame(x,{[1 3]})&&aresame(y,{[1 3]}))
 
 % for i=1:6
 %     [x1{i} x{i}]
