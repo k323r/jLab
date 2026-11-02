@@ -423,14 +423,11 @@ end
 for i=1:size(x,2)
     index=find(isnan(x0(:,i)));
     if~isempty(index)
-        Ttemp=T(:,:,i);
         if ~isreal(T)
-            Ttemp(index,:)=nan*(1+sqrt(-1));
+            T(index,:,i,:)=nan*(1+sqrt(-1));
         else
-            Ttemp(index,:)=nan;
+            T(index,:,i,:)=nan;
         end
-        
-        T(:,:,i)=Ttemp;
     end
 end
 %\********************************************************
@@ -442,6 +439,16 @@ wavetrans_test_sizes;
 wavetrans_test_complex;
 wavetrans_test_boundary;
 wavetrans_test_tooshort;
+wavetrans_test_missing;
+
+function[]=wavetrans_test_missing
+load npg2006
+cx=npg2006.cx;
+index=find(isnan(cx));
+fs=2*pi./(logspace(log10(10),log10(100),4)');
+w=wavetrans([real(cx) imag(cx)],{3,2,4,fs},'periodic');
+bool=~isempty(index)&&allall(isnan(w(index,:,:,:)))&&allall(isfinite(w(~isnan(cx),:,:,:)));
+reporttest('WAVETRANS missing data set to NANs for all wavelets, K>1',bool)
 
 function[]=wavetrans_test_tooshort
 load npg2006
