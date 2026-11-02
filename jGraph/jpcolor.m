@@ -37,6 +37,7 @@ function[h,hc]=jpcolor(varargin)
 %   [H,HC]=JPCOLOR(...) also returns the handle HC to the colorbar.
 %
 %   'jpcolor --f' generates a figure showing the differences from PCOLOR.
+%   'jpcolor --t' runs a test.
 %
 %   Usage: jpcolor(z)
 %          jpcolor(x,y,z);
@@ -50,6 +51,8 @@ if strcmpi(varargin{1}, '--f')
     type makefigs_jpcolor
     makefigs_jpcolor;
     return
+elseif strcmpi(varargin{1}, '--t')
+    jpcolor_test,return
 end
 
 label=[];
@@ -84,11 +87,9 @@ end
 x=x(:);
 y=y(:);
 
-dx=x(2)-x(1);
-dy=y(2)-y(1);
-
-x=interp1([1:length(x)]',x,[1:length(x)+1]','pchip','extrap');
-y=interp1([1:length(y)]',y,[1:length(y)+1]','pchip','extrap');
+%Cell edges at midpoints, outer edges half a spacing beyond the centers
+x=[x(1)-(x(2)-x(1))/2;(x(1:end-1)+x(2:end))/2;x(end)+(x(end)-x(end-1))/2];
+y=[y(1)-(y(2)-y(1))/2;(y(1:end-1)+y(2:end))/2;y(end)+(y(end)-y(end-1))/2];
 
 %x=[x;x(end)+dx];
 %x=x-dx/2;
@@ -106,7 +107,7 @@ z=vswap(z,-inf,nan);
 %vsize(x,y,z);
 
 %h=pcolor(x,y,z);shading flat
-h=pcolor(x-dx/2,y-dy/2,z);shading flat
+h=pcolor(x,y,z);shading flat
 uistack(h,'bottom')
 axis([min(x) max(x) min(y) max(y)])
 boxon
@@ -124,3 +125,12 @@ if ~isempty(label)
 end
 
 if nargout==0, clear h hc, end
+
+function[]=jpcolor_test
+
+hf=figure('visible','off');
+h=jpcolor([0 1 3 6 10],(0:0.5:3)',randn(7,5));
+bool=aresame(h.XData(:)',[-0.5 0.5 2 4.5 8 12])&&aresame(h.YData(:)',-0.25:0.5:3.25);
+bool=bool&&aresame(axis,[-0.5 12 -0.25 3.25]);
+close(hf)
+reporttest('JPCOLOR cell edges and axis limits for nonuniform grid',bool)
