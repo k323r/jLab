@@ -60,12 +60,18 @@ function[varargout]=ncinterp(varargin)
 %   is within one latitude spacing interval of the pole. 
 %   __________________________________________________________________
 %
+%   'ncinterp --t' runs a test.
+%
 %   Usage: x=ncinterp(filename,num,lat,lon,varname);
 %          [x1,x2]=ncinterp(filename,num,lat,lon,varname1,varname2);
 %   __________________________________________________________________
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2016--2021 J.M. Lilly --- type 'help jlab_license' for details
  
+if strcmp(varargin{1}, '--t')
+    ncinterp_test,return
+end
+
 filename=varargin{1};
 numi=varargin{2};
 lati=varargin{3};
@@ -294,7 +300,7 @@ for i=a:N:b
         end
     end
     
-    pagecount=min([maxN,length(num)-i+1,b-i+1]);
+    pagecount=min([N,length(num)-i+1,b-i+1]);
     xn=double(ncread(filename,varname,[1 1 i],[inf inf pagecount]));
     
     x=vzeros(length(lat),length(lon),size(xn,3)+1);
@@ -407,6 +413,26 @@ end
 
 bool=isnan(xk)&~isnan(lati);
 xk(bool)=inf;
+
+function[]=ncinterp_test
+
+filename=[tempname '.nc'];
+lon=(0:10:40)';lat=(0:10:30)';num=(1:10)';
+x=reshape(sin(1:length(lat)*length(lon)*length(num)),length(lat),length(lon),length(num));
+nccreate(filename,'lon','Dimensions',{'lon',length(lon)});ncwrite(filename,'lon',lon);
+nccreate(filename,'lat','Dimensions',{'lat',length(lat)});ncwrite(filename,'lat',lat);
+nccreate(filename,'num','Dimensions',{'num',length(num)});ncwrite(filename,'num',num);
+nccreate(filename,'x','Dimensions',{'lat',length(lat),'lon',length(lon),'num',length(num)});
+ncwrite(filename,'x',x);
+
+numi=linspace(2,9.95,30)';lati=linspace(1,29,30)';loni=linspace(39,1,30)';
+x0=interpn(lat,lon,num,x,lati,loni,numi);
+x1=ncinterp(filename,numi,lati,loni,'x','loop');
+x2=ncinterp(filename,numi,lati,loni,'x');
+delete(filename)
+
+reporttest('NCINTERP loop algorithm matches INTERPN, regular order',aresame(x1,x0,1e-10))
+reporttest('NCINTERP default algorithm matches loop algorithm, regular order',aresame(x2,x1,1e-10))
 
 %tic;uwnd1=ncinterp('gom_ccmp_winds.nc',num,lat,lon,'uwnd');toc
 %tic;uwnd2=ncinterp('gom_ccmp_winds.nc',num,lat,lon,'uwnd','loop');toc
