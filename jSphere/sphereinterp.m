@@ -233,12 +233,8 @@ end
 
 %--------------------------------------------------------------------------
 %Preparing for linear interpolation by finding indices
-if ~aresame(size(lat),size(lon))
-    [long,latg]=meshgrid(lon,lat);
-    [ii,jj]=vzeros(size(latg),'nan');
-else
-    [ii,jj]=vzeros(size(lat),'nan');
-end
+[long,latg]=meshgrid(lon,lat);
+[ii,jj]=vzeros(size(latg),'nan');
 
 %This version works when I have plaid (meshgrid) output
 [jjo,iio]=meshgrid(1:size(lato,2),1:size(lato,1));
@@ -426,6 +422,15 @@ end
 
 function[]=sphereinterp_test
  
+%Target LAT and LON of the same length
+[lono,lato]=meshgrid(0:19,0:9);
+zo=lato+10*lono;
+lat=[2.5 3.25];lon=[4.5 7.75];
+[dx,dy,index,bool]=sphereinterp(lato,lono,lat,lon);
+[long,latg]=meshgrid(lon,lat);
+z=sphereinterp(dx,dy,index,bool,zo);
+reporttest('SPHEREINTERP LAT and LON of the same length',aresame(z,interp2(lono,lato,zo,long,latg),1e-10))
+
 load slasnapshot
 lono=slasnapshot.lon;
 lato=slasnapshot.lat;
