@@ -290,7 +290,7 @@ else
    V=nan;
 end
 
-cve=simpleddy(r-re,R,V);
+cve=simpleddy(r-re,R,V,str);
 %cve(~bool)=nan;
 ue=real(cve);
 ve=imag(cve);
@@ -312,11 +312,15 @@ v(isnan(u))=nan;
 
 function[]=eddyfit2d_test
 
-z0=[0 80 -30];
-za=[0 0 -80];
-zb=[D inf 80];
-
-
-
-%reporttest('EDDYFIT2D',aresame())
+lat=(29:0.1:31)';
+lon=(-61:0.1:-59)';
+[xg,yg]=meshgrid(lon,lat);
+[x,y]=latlon2xy(yg,xg,30,-60);
+cv=reshape(simpleddy(x+1i*y-(20+10i),40,30,'rankine'),size(xg));
+u=cat(3,real(cv),real(cv));
+v=cat(3,imag(cv),imag(cv));
+fit=eddyfit2d([1 2],lat,lon,u,v,30,-60,100,[],[10 30 20],[0 0 -80],[100 inf 80],'rankine');
+bool=x.^2+y.^2<100^2;
+cve=fit.ue+1i*fit.ve;
+reporttest('EDDYFIT2D model velocities for Rankine eddy',aresame(cve(bool),cv(bool),1e-3)&&fit.errp<1e-3)
 
