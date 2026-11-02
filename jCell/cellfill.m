@@ -49,20 +49,20 @@ for i=2:length(varargin)
 end
 
 %Find all nonfinite data
-varargout=varargin;
 for i=1:length(varargin)
+    varargout{i}=cell(size(varargin{1}));
     for j=1:length(varargin{1})
         temp=varargin{i}{j};
         if  isempty(find(~isinf(temp),1))
             bool{j}(:,i)=false;
-            varargout{i}{j,1}=[];
+            varargout{i}{j}=[];
         else
             bool{j}(:,i)=~isinf(temp);
             index=find(bool{j}(:,i));
             if length(temp)>1
-               varargout{i}{j,1}=interp1(index,temp(index),[1:length(temp)]',str);
+               varargout{i}{j}=interp1(index,temp(index),[1:length(temp)]',str);
             else
-               varargout{i}{j,1}=temp(index);
+               varargout{i}{j}=temp(index);
             end
         end
     end
@@ -96,4 +96,10 @@ y1=x1;
 cellfill(x,y,'linear');
 
 reporttest('CELLFILL',aresame(x1,x)&&aresame(y1,y))
+
+clear x
+x{1}=[1 inf 3]';
+x{2}=[2 inf 4]';
+y=cellfill(x);
+reporttest('CELLFILL row cell input',aresame(size(y),[1 2])&&aresame(y{1},[1 2 3]')&&aresame(y{2},[2 3 4]'))
 
