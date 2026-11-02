@@ -49,6 +49,7 @@ clon=clon-1e-15;
 
 if clon<minmin(lon)||clon>maxmax(lon)
     [temp,index]=min(lon);
+    index=index-1;
 else
     index=find(vshift(lon,1,2)>clon&lon<=clon,1);
 end
@@ -79,3 +80,6 @@ lat=(-59.5:1:59.5)';
 
 tol=1e-10;
 reporttest('LONSHIFT reversibility',aresame(deg360(lon),deg360(lon2),tol)&&aresame(latmat,latmat2)&&aresame(deg360(lonmat),deg360(lonmat2)))
+
+[lon3,lonmat3]=lonshift(0,deg360(lon),deg360(lonmat));
+reporttest('LONSHIFT starts at minimum for LONO outside data',aresame(lon3,(0.5:1:359.5)',tol)&&aresame(lonmat3(1,:)',lon3,tol))
