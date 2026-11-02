@@ -49,6 +49,9 @@ if strcmpi(varargin{1},'--f')
 %    isomax_fig;
     return
 end
+if strcmpi(varargin{1},'--t')
+    isomax_test,return
+end
 
 parstr='serial';
 str='band';
@@ -184,169 +187,21 @@ end
 %    disp('ISOMAX found no isolated maxima with the specified properties.')
 %end
 
-function[]=isomax_fig
+function[]=isomax_test
 
+ga=3;be=2;mu=0;
+fs=2*pi./logspace(1,3,20)';
+siz=[1000 20];
+ii=[300 305 800]';
+jj=[10 10 10]';
+ww=[1 0.5 0.5]';
+ff=fs(jj);
 
+[bool,z]=isomax(siz,sub2ind(siz,ii,jj),ww,ff,ga,be,mu,1/2);
+b1=aresame(bool(:),[true false true]');
+b2=inpolygon(ii(2),ff(2),real(z(:,1)),imag(z(:,1)));
+reporttest('ISOMAX smaller maximum within region of influence is not isolated',b1&&b2);
 
-
-
-z1=morseregion(10,.5,ga,be,mu);
-z2=morseregion(70,.5,ga,be,mu);
-
-    
-%L=frho/2/pi;
-
-ga=2;be=3;mu=0;frho=2*pi/100;
-rho=morsefreq(ga,mu)./frho;
-psi=morsewave(1000,ga,mu,frho)*rho;
-psi=psi./maxmax(abs(psi));
-
-fmax=frac(morsefreq(ga,be),rho*frac(be,mu+1).^(1./ga));
-
-%maxmax(abs(psi))
-%morseafun(ga,mu)./(2*pi*ga).*gamma((mu+1)./ga)./rho
-
-%morseafun(ga,mu)./(2*pi*ga).*gamma((mu+1)./ga)./ maxmax(abs(psi))
-
-num=[1:length(psi)]';
-fs=morsespace(ga,be,2*pi/30,2*pi/1000,8);
-s=morsefreq(ga,be)./fs';
-%w=wavetrans(psi,{1,ga,be,fs,'bandpass'},'mirror')*sqrt(2);
-w=wavetrans(real(psi),{ga,be,fs});
-figure,
-jpcolor(num,fs,abs(w)');shading interp,hold on,ylog,
-[ii,jj,ww,ff]=transmax(fs,w);
-plot(ii,ff,'m.')
-[ii,jj,ww,ff,ahat,fhat,z]=isomax(ii,jj,ww,ff,ga,be,mu,0.1);
-plot(ii,ff,'*'),plot(z)
-
-
-figure,
-lambda=0.9;%lambda=1/2;lambda=0.1;
-[ii,jj,ww,ff]=transmax(fs,w);
-[ii,jj,ww,ff,ahat,fhat,z]=isomax(ii,jj,ww,ff,ga,be,mu,lambda);
-contour(num,fs,abs(w)'./maxmax(abs(w)),[lambda lambda],'k');hold on,plot(z)
-
-
-
-[ix,jx,wx,ahat,fhat,z]=isomax(w,0,num,fs,1/2,ga,be,mu);colormap lansey
-%plot(num(ix),fs(jx),'m*')
-
-
-phio=frac(morseafun(ga,be).*morseafun(ga,mu),2*pi*ga).*...
-    gamma(frac(be+mu+1,ga)).*...
-    frac((s.^be).*(rho.^(mu+1)),(s.^ga+rho.^ga).^((be+mu+1)./ga));
-
-phio=frac(morseafun(ga,be).*morseafun(ga,mu),2*pi*ga).*...
-    gamma(frac(be+mu+1,ga)).*...
-    frac((s.^be).*(rho.^(mu+1)),(s.^ga+rho.^ga).^((be+mu+1)./ga));
-
-
-phio=morseafun(ga,be).*frac(gamma(frac(be+mu+1,ga)),gamma(frac(mu+1,ga))).*...
-    frac((s.^be).*(rho.^(mu+1)),(s.^ga+rho.^ga).^((be+mu+1)./ga));
-
-
-
-
-
-%fact=frac(morseafun(ga,be).*morseafun(ga,mu),morseafun(ga,be+mu)).*
-%frac((s.^be).*(rho.^mu),(s.^ga+rho.^mu).^((be+mu+1)./ga));
-%psio=morsewave(1000,be
-%fact=vrep(fact,
-
-%w,chi,t,fs,lambda,gamma,beta,mu
-
-
-load bravo94
-use bravo94.rcm
-numo=datenum(1994,1,1)-1;
-
-ga=2;be=1;mu=0;
-fs=morsespace(ga,be,2*pi/30,2*pi/1000,8);
-
-%Compute wavelet transforms using generalized Morse wavelets
-[wx,wy]=wavetrans(real(cv(:,2)),imag(cv(:,2)),{ga,be,fs});
-w=sqrt(abs(wx).^2+abs(wy).^2);
-figure,
-jpcolor(num-numo,24*fs,w');shading interp,hold on,ylog,colormap lansey
-[ii,jj,ww,ff]=transmax(fs,w);
-plot(num(ii)-numo,ff*24,'m.')
-[ii,jj,ww,ff,ahat,fhat,z]=isomax(ii,jj,ww,ff,ga,be,mu,0.1);
-plot(num(ii)-numo,ff*24,'k*')
-
-
-
-figure,
-jpcolor(1:size(w,1),24*fs,w');shading interp,hold on,ylog,colormap lansey
-[ii,jj,ww,ff]=transmax(fs,w);
-plot(ii,ff*24,'m.')
-[ii,jj,ww,ff,ahat,fhat,z]=isomax(ii,jj,ww,ff,ga,be,mu,1/2);
-plot(ii,ff*24,'k*')
-plot(real(z)+1i*imag(z)*24)
-
-figure
-jpcolor(1:size(w,1),fs,w');shading interp,hold on,ylog,colormap lansey
-[ii,jj,ww,ff]=transmax(fs,w);
-plot(ii,ff,'m.')
-[ii,jj,ww,ff,ahat,fhat,z]=isomax(ii,jj,ww,ff,ga,be,mu,1/2);
-plot(ii,ff,'k*')
-plot(z)
- 
- 
-
-plot(z,'w')
-[ix,jx,wx,z]=isomax(w,10,num-numo,fs*24,0.8,ga,be,0);
-plot(z,'m')
-
-
-
-[ix,jx,wx]=isomax(w,10,fs,ga,be,2);
-
-
-
-
-[ix,jx,wx]=isomax(w,10,fs,ga,be,2,'plot',num-numo,fscale,'c');caxis([1 5])
-
-
-%set(gca,'dataaspectratio',[200 1 1])
-plot(num(ix)-numo,fscale*fs(jx),'m*')
-xlabel('Day of Year 1994');
-ylabel('Frequency (cycles per day)')
-title('Isolated Maxima at the Bravo mooring')
-
-
-psi=morsewave(10000,ga,be,2*pi/1000);
-num=[1:length(x)]';num=num-mean(num);
-w=wavetrans(x,{1,ga,be,fs,'bandpass'},'mirror');
-figure,
-jpcolor(num,fscale.*fs,sqrt(abs(w))');shading interp,hold on,ylog,flipmap
-[ix,jx,wx]=isomax(w,10,fs,ga,be,2,'plot',num,fscale,'c');colormap lansey
-plot(num(ix),fscale*fs(jx),'m*')
-
-figure,
-x=morsewave(10000,ga,be,2*pi/100);
-fs=morsespace(ga,be,2*pi/10,2*pi/5000,8);
-num=[1:length(x)]';num=num-mean(num);
-w=wavetrans(x,{1,ga,be,fs,'energy'},'mirror');
-%contourf(num,fs,log(abs(w))',100);nocontours,hold on,ylog,
-contourf(num,fs,(abs(w))',100);nocontours,hold on,ylog,
-%[ix,jx,wx]=isomax(w,1e-6,fs,ga,be,2,'plot',num,1,'c');colormap lansey
-%plot(num(ix),fs(jx),'m*')
-
-%figure,
-%jpcolor(sqrt(abs(w))');shading interp,hold on,ylog,flipmap
-%plot(ix,jx,'m*')
-
-figure,jpcolor(num,fs,(abs(w')));,hold on,ylog,
-[t,f]=morseregion(0.6,ga,be,be,2*pi/100);
-plot(t,f)
-[t,f]=morseregion(1,ga,be,2*pi/100);
-
-figure,jpcolor(num,fs,abs(w)'),shading interp,hold on
-contour(num,fs,(abs(w))',20,'k');
-figure,jpcolor(num,flipud(fs),flipud(abs(w)')),shading interp,hold on
-contour(num,flipud(fs),flipud(abs(w)'),20,'k');
-
-figure,jpcolor(abs(w)'),shading interp,hold on
-contour((abs(w))',20);
-
+siz=[1000 20 2];
+bool=isomax(siz,sub2ind(siz,ii,jj,[1 2 1]'),ww,ff,ga,be,mu,1/2);
+reporttest('ISOMAX maxima from different time series are treated separately',allall(bool));
