@@ -25,7 +25,7 @@ function[varargout]=mat2col(varargin)
 %no loops!
 
 if strcmpi(varargin{1},'--t')
-    return
+    mat2col_test,return
 end
 
 if isempty(varargin{1})
@@ -41,10 +41,13 @@ while i<nargin
 	mat=varargin{i};
 
 	if i==1
-		if ~all(isnan(mat(end,:)))
-			mat(size(mat,1)+1,:)=nan*ones(size(mat(1,:)));
-		end
-		mat=mat(:);
+		bpad=~all(isnan(mat(end,:)));
+	end
+	if bpad
+		mat(size(mat,1)+1,:)=nan*ones(size(mat(1,:)));
+	end
+	mat=mat(:);
+	if i==1
 
 		%new matrix should include all data points
 		bool=false(size(mat));
@@ -74,4 +77,7 @@ if nargout==0
   eval(to_overwrite(nargin));
 end
 
+function[]=mat2col_test
 
+[c1,c2]=mat2col([1 2;3 nan;5 nan],[10 20;30 nan;50 nan]);
+reporttest('MAT2COL multiple inputs, last row not all NaN',aresame([c1 c2],[1 10;3 30;5 50;nan nan;2 20;nan nan]))
