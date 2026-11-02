@@ -79,7 +79,7 @@ function[varargout]=sphereinterp(varargin)
 %
 %   The closest original point to each target point is found using 
 %   SPHEREDIST.  The DX and DY arrays are found from the observed lat/lon
-%   deviations by inverting (using MATINV) the Jacobian matrix describing
+%   deviations by inverting the Jacobian matrix describing
 %   the variation of LATO and LONO with respect to the array coordinates.
 %
 %   INDEX is a cell array with four elements, each of which is the same
@@ -331,7 +331,13 @@ M(2,2,:,:)=M22;
 %M(:,:,2,1)=M21;
 %M(:,:,2,2)=M22;
 
-invM=matinv(M);%Inverting this matrix
+%Inverting this matrix
+detM=M11.*M22-M12.*M21;
+invM=zeros(size(M));
+invM(1,1,:,:)=M22./detM;
+invM(1,2,:,:)=-M12./detM;
+invM(2,1,:,:)=-M21./detM;
+invM(2,2,:,:)=M11./detM;
 %squeeze(M(10,10,:,:))*squeeze(invM(10,10,:,:))  %Just checking
 
 %Values of nearest (lato,lono) observed at (lat,lon) locations
@@ -442,6 +448,17 @@ tic;znearest=interp2(lono,lato,zo,long,latg,'nearest');toc
 tic;zlinear=interp2(lono,lato,zo,long,latg,'linear');toc
 
 reporttest('SPHEREINTERP compare with INTERP2 for plaid grid',aresame(zlin,zlinear,1e-10))
+
+%Affine non-plaid grid, for which the linear interpolation is exact
+[jo,io]=meshgrid(1:30,1:40);
+lato=0.5*io+0.1*jo;
+lono=0.2*io+0.7*jo;
+lat=6:0.37:12;lon=8:0.53:14;
+[dx,dy,index,bool]=sphereinterp(lato,lono,lat,lon);
+[long,latg]=meshgrid(lon,lat);
+b1=aresame(sphereinterp(dx,dy,index,bool,lato),latg,1e-10);
+b2=aresame(sphereinterp(dx,dy,index,bool,lono),long,1e-10);
+reporttest('SPHEREINTERP exact for affine non-plaid grid',b1&&b2)
 
 %lon=-64:1/10:-46;lat=26:1/10:42;
 lono=slasnapshot.lon;
