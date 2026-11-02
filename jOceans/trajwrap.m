@@ -37,9 +37,9 @@ function[varargout]=trajwrap(varargin)
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2014--2015 J.M. Lilly --- type 'help jlab_license' for details
  
-if strcmpi(varargin{1}(1:3),'--t')
+if ischar(varargin{1})&&strcmpi(varargin{1},'--t')
     trajwrap_test;return
-elseif strcmpi(varargin{1}(1:3),'--f')
+elseif ischar(varargin{1})&&strcmpi(varargin{1},'--f')
     type makefigs_trajwrap
     makefigs_trajwrap;
     return
@@ -101,6 +101,12 @@ use vortex.drifters
 cx=x+1i*y;
 cx2=trajwrap(trajunwrap(cx,[L*pi,nan]),[L*pi,nan]);
 reporttest('TRAJWRAP inverts TRAJUNWRAP for VORTEX dataset',aresame(cx2,cx,1e-10))
+
+z=[3+1i;5-5i];
+zw=trajwrap({z,z(1)},4);
+bool=aresame(zw{1},[3+1i;-3+3i],1e-10)&&aresame(zw{2},3+1i,1e-10);
+bool=bool&&aresame(trajwrap(z,4),zw{1},1e-10);
+reporttest('TRAJWRAP cell and array input with fewer than three elements',bool)
 
 
 
