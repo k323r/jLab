@@ -29,6 +29,7 @@ function[bool]=inellipse(varargin)
 %
 %   See also ELLCURVES, ELLIPSEPLOT.
 %
+%   'inellipse --t' runs a test.
 %   'inellipse --f' generates sample figure.
 %
 %   Usage: bool=inellipse(z,kappa,lambda,theta,zo);
@@ -40,6 +41,9 @@ if strcmpi(varargin{1}, '--f')
     type makefigs_inellipse
     makefigs_inellipse;
     return
+end
+if strcmpi(varargin{1}, '--t')
+    inellipse_test,return
 end
  
 z=varargin{1};
@@ -84,8 +88,15 @@ vartheta=angle(z);
 phi=atan(frac(a,b).*tan(vartheta-theta));
 
 %Distance at this ellipse phase
-R=kappa.*sqrt(1+lambda.*cos(2*phi));
+R=kappa.*sqrt(1+abs(lambda).*cos(2*phi));
 
 bool=(abs(z)<=R);
 
 %Find angle to ellipse center
+
+function[]=inellipse_test
+ 
+z=[0.9i 0.9 1.1i 1.2 0.5+0.5i];
+bool1=inellipse(z,1,1/2,0,0);
+bool2=inellipse(z,1,-1/2,0,0);
+reporttest('INELLIPSE clockwise and counterclockwise ellipses',aresame(bool1,bool2)&&aresame(bool1,[false true false true true]'))
