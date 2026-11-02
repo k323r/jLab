@@ -60,12 +60,18 @@ function[varargout]=ncinterp(varargin)
 %   is within one latitude spacing interval of the pole. 
 %   __________________________________________________________________
 %
+%   'ncinterp --t' runs a test.
+%
 %   Usage: x=ncinterp(filename,num,lat,lon,varname);
 %          [x1,x2]=ncinterp(filename,num,lat,lon,varname1,varname2);
 %   __________________________________________________________________
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2016--2021 J.M. Lilly --- type 'help jlab_license' for details
  
+if strcmp(varargin{1}, '--t')
+    ncinterp_test,return
+end
+
 filename=varargin{1};
 numi=varargin{2};
 lati=varargin{3};
@@ -254,7 +260,7 @@ for i=a:maxN:b
     %vsize(x,xn,xp)
     
     %vsize(num,lat,lon,numi,lati,loni,x,xn,xp)%return
-    bool=(numi>=num(i))&(numi<=num(i+pagecount-1));
+    bool=(numi>=num(i-1))&(numi<=num(i+pagecount-1));
     %vsize(numi,lati,loni,bool)
     [numk,latk,lonk]=vindex(numi(:),lati(:),loni(:),bool(:),1);  
     %round([min(lon) min(lonk) max(lon) max(lonk)])
@@ -315,7 +321,7 @@ for i=a:N:b
     if blatdown,x(1,:,:)=x(2,:,:);end         %Extra row for southern latitudes
     if blatup,  x(end,:,:)=x(end-1,:,:);end   %Extra row for northern latitudes
     
-    bool=(numi>=num(i))&(numi<=num(i+pagecount-1));
+    bool=(numi>=num(i-1))&(numi<=num(i+pagecount-1));
     [numk,latk,lonk]=vindex(numi,lati,loni,bool,1);  
 %    vsize(lon,lat,num((i-1):(i+Ni)),x,lonk,latk,numk)
     %Note that INTERP3 bizarrely has reversed the first two input arguments
@@ -407,6 +413,27 @@ end
 
 bool=isnan(xk)&~isnan(lati);
 xk(bool)=inf;
+
+function[]=ncinterp_test
+
+filename=[tempname '.nc'];
+lon=(0:10:40)';lat=(0:10:30)';num=(1:10)';
+x=reshape(sin(1:length(lon)*length(lat)*length(num)),length(lon),length(lat),length(num));
+nccreate(filename,'lon','Dimensions',{'lon',length(lon)});ncwrite(filename,'lon',lon);
+nccreate(filename,'lat','Dimensions',{'lat',length(lat)});ncwrite(filename,'lat',lat);
+nccreate(filename,'num','Dimensions',{'num',length(num)});ncwrite(filename,'num',num);
+nccreate(filename,'x','Dimensions',{'lon',length(lon),'lat',length(lat),'num',length(num)});
+ncwrite(filename,'x',x);
+
+numi=linspace(1.05,9.95,30)';lati=linspace(1,29,30)';loni=linspace(39,1,30)';
+x0=interpn(lon,lat,num,x,loni,lati,numi);
+M=3*length(lon)*length(lat)*8/1e9;  %Three time slices per chunk
+x1=ncinterp(filename,numi,lati,loni,'x','transpose','loop');
+x2=ncinterp(filename,numi,lati,loni,'x','transpose',M);
+delete(filename)
+
+reporttest('NCINTERP loop algorithm matches INTERPN, transpose order',aresame(x1,x0,1e-10))
+reporttest('NCINTERP chunked algorithm matches loop algorithm including times between chunks, transpose order',aresame(x2,x1,1e-10))
 
 %tic;uwnd1=ncinterp('gom_ccmp_winds.nc',num,lat,lon,'uwnd');toc
 %tic;uwnd2=ncinterp('gom_ccmp_winds.nc',num,lat,lon,'uwnd','loop');toc
