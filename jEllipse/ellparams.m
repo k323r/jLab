@@ -79,7 +79,7 @@ if ~isempty(varargin{1})
                 else
                     z=varargin{3};
                     [kappa{i,1},lambda{i,1},theta{i,1},phi{i,1},alpha{i,1},beta{i,1}]=...
-                        ellparams_one(x{i},x{i},z{3}{i},dim);
+                        ellparams_one(x{i},y{i},z{i},dim);
                 end
             else
                 [kappa{i,1},lambda{i,1},theta{i,1},phi{i,1},alpha{i,1},beta{i,1}]=vempty;
@@ -224,6 +224,10 @@ alpha=pi/6-phi./14.45*2*lambda(1)*sqrt(2);
 x1=[kappa lambda theta phi alpha beta];
 x2=[kappa2 lambda2 theta2 phi2 alpha2 beta2];
 reporttest('ELLPARAMS rapidly changing trivariate ellipse',aresame(x1,x2,1e-8))
+
+[kappa3,lambda3,theta3,phi3,alpha3,beta3]=ellparams({x,x},{y,y},{z,z});
+x3=[kappa3{2} lambda3{2} theta3{2} phi3{2} alpha3{2} beta3{2}];
+reporttest('ELLPARAMS trivariate cell array input',length(kappa3)==2&&aresame(x2,x3,1e-10))
 
 
 
