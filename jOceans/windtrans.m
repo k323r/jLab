@@ -116,7 +116,8 @@ if all(bool)
      disp('Sorry, the tilde expansion algorithm is not implemented for the free-slip transfer function.')  
 end
 %these may have been either input, or reflecting the default behavior
-if strcmpi(str(1:3),'exp')&&strcmpi(slipstr(1:3),'fre')
+%the free-slip solution is only computed with the general formula
+if ~strcmpi(str(1:3),'eli')&&strcmpi(slipstr(1:3),'fre')
      str='gen';
 end
 
@@ -524,6 +525,15 @@ end
 function[]=windtrans_test
 windtrans_test_gradient;
 windtrans_test_limits;
+windtrans_test_freeslip;
+
+function[]=windtrans_test_freeslip
+
+omega=linspace(-3,3,5)';
+G=windtrans(omega,10,1,20,5,100,'free');
+G1=windtrans(omega,10,1,20,5,100,'free','far');
+G2=windtrans(omega,10,1,20,5,100,'free','two');
+reporttest('WINDTRANS free slip uses general formula for all algorithm choices',allall(G~=0)&&aresame(G1,G,1e-15)&&aresame(G2,G,1e-15))
 
 function[]=windtrans_test_gradient
 
