@@ -117,6 +117,9 @@ function[varargout]=wavetrans(varargin)
 %
 %        ABS(WX).^2+ABS(WY).^2 = ABS(WP).^2+ABS(WN).^2.
 %
+%   If PSI is a matrix of wavelets rather than a cell array, the wavelet
+%   normalization is not known, and the factor of 1/2 is always used.
+%
 %   There are two equivalent ways to compute the positive and
 %   negative rotary transforms.  The first is
 %
@@ -243,8 +246,8 @@ T=squeeze(T);
 
 normstr='bandpass'; %default for wavetrans
 if iscell(argcell{1})
-    if ischar(argcell{1}(end))
-        normstr=argcell{1}(end);
+    if ischar(argcell{1}{end})
+        normstr=argcell{1}{end};
     end
 end
 
@@ -252,7 +255,7 @@ if isreal(x)
     T=2*T;
 else 
     if strcmpi(normstr(1:3),'ene')
-        T=T./sqrt(2);
+        T=T.*sqrt(2);
     end 
 end
 
@@ -261,8 +264,8 @@ function[T]=wavetrans_continue(x,argcell,parstr)
 
 normstr='bandpass'; %default for wavetrans
 if iscell(argcell{1})
-    if ischar(argcell{1}(end))
-        normstr=argcell{1}(end);
+    if ischar(argcell{1}{end})
+        normstr=argcell{1}{end};
     end
 end
 
@@ -525,6 +528,11 @@ fs=2*pi./(logspace(log10(10),log10(100),50)');
 
 
 reporttest('WAVETRANS complex-valued input',aresame(wp,wp2,1e-6)&&aresame(wn,wn2,1e-6))
+
+[wx,wy]=wavetrans(real(cx),imag(cx),{1,2,4,fs,'energy'},'mirror');
+[wp,wn]=wavetrans(cx,conj(cx),{1,2,4,fs,'energy'},'mirror');
+[wp2,wn2]=vectmult(frac(1,sqrt(2))*[1 1i; 1 -1i],wx,wy);
+reporttest('WAVETRANS complex-valued input, energy normalization',aresame(wp,wp2,1e-6)&&aresame(wn,wn2,1e-6))
 
 function[]=wavetrans_test_sizes
 
