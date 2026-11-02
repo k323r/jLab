@@ -53,10 +53,10 @@ end
 
 num=varargin{1};
 if length(a)==1
-    a=a+zero(size(num));
+    a=a+zeros(size(num));
 end
 if length(b)==1
-    b=b+zero(size(num));
+    b=b+zeros(size(num));
 end
 
 n0=0;
@@ -84,4 +84,11 @@ eval(to_overwrite(length(varargin)))
 
 function[]=cellimit_test
  
-%reporttest('CELLIMIT',aresame())
+num{1}=[1 2 3 4 5 6]';num{2}=[3 4 5 6 7]';num{3}=[5 6]';
+numo{1}=[4 5 6]';numo{2}=[4 5 6]';numo{3}=[5 6]';
+reporttest('CELLIMIT scalar A and B',aresame(cellimit(num,4,6),numo))
+
+x{1}=-num{1};x{2}=-num{2};x{3}=-num{3};
+[num1,x1]=cellimit(num,x,[2 4 5],[5 6 6]);
+numo{1}=[2 3 4 5]';
+reporttest('CELLIMIT array A and B, multiple inputs',aresame(num1,numo)&&aresame(x1,{-numo{1},-numo{2},-numo{3}}))
