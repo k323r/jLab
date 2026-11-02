@@ -104,10 +104,10 @@ end
 %lapa=frac(1,R.^2.*cos(phi).^2).*frac(1,dphi.^2).*vdiff(vdiff(f,1,strlat),1,strlat);
 %lapb=frac(1,R.^2.*cos(phi)).*frac(1,dth.^2).*vdiff(cos(phi).*vdiff(f,2,str),2,str);
 
-lapa=frac(1,R.^2.*cos(phi).^2).*frac(1,dth.^2).*vdiff(vdiff(f,2,strlat),2,strlat);
-lapb=frac(1,R.^2.*cos(phi)).*frac(1,dphi.^2).*vdiff(cos(phi).*vdiff(f,1,str),1,str);
-lapc=frac(1,R.^2.*cos(phi).^2).*frac(1,dphi.*dth).*vdiff(cos(phi).*vdiff(f,1,str),2,str);
-lapd=frac(1,R.^2.*cos(phi)).*frac(1,dphi.*dth).*vdiff(vdiff(f,2,str),1,str);
+lapa=frac(1,R.^2.*cos(phi).^2).*frac(1,dth.^2).*vdiff(vdiff(f,2,str),2,str);
+lapb=frac(1,R.^2.*cos(phi)).*frac(1,dphi.^2).*vdiff(cos(phi).*vdiff(f,1,strlat),1,strlat);
+lapc=frac(1,R.^2.*cos(phi).^2).*frac(1,dphi.*dth).*vdiff(cos(phi).*vdiff(f,1,strlat),2,str);
+lapd=frac(1,R.^2.*cos(phi)).*frac(1,dphi.*dth).*vdiff(vdiff(f,2,str),1,strlat);
 
 lap=lapa+lapb;
 % tol=1e-6;
@@ -128,6 +128,12 @@ del2fa=spherelap(lat,lon,f,'nans');
 del2fb=spherediv(lat,lon,gradx,grady,'nans');
 
 reporttest('SPHERELAP matches SPHEREDIV of SPHEREGRAD for white noise',aresame(del2fa,del2fb,1e-10))
+
+del2fa=spherelap(lat,lon,f);
+[gradx,grady]=spheregrad(lat,lon,f);
+del2fb=spherediv(lat,lon,gradx,grady);
+
+reporttest('SPHERELAP matches SPHEREDIV of SPHEREGRAD for white noise, periodic',aresame(del2fa(2:end-1,:),del2fb(2:end-1,:),1e-10))
 
 %Try this with goldsnapshot
 load goldsnapshot
