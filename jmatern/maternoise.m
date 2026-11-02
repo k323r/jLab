@@ -148,6 +148,11 @@ end
 if length(varargin)>6
     nu=varargin{7};
 end
+if length(varargin)==6&&strcmpi(model(1:3),'sta')
+    %For the standard model, the sixth argument is the frequency NU
+    mu=0;
+    nu=varargin{6};
+end
 
 %dt, N, sigma, alpha, nu
 
@@ -551,6 +556,15 @@ alpha=[1 1.1 1.2 1.5 2 3 4 5 6 7 8];
 N=1000;H=1/100;nu=2*H;
 [z,err]=maternoise(1,N,10,alpha,H,nu,'fast','err');
 reporttest('MATERNOISE error between approximated and true autocovariance < 1e-6 ALPHAs >=1',err<1e-6)
+
+rng(1);
+N=100;alpha=1.5;H=1/10;nu=1/2;
+[tau,R]=materncov(1,N,1,alpha,H,nu);
+z1=maternoise(1,[N,1000],1,alpha,H,nu);
+z2=maternoise(1,[N,1000],1,alpha,H,nu,'fast');
+R1=mean(mean(z1(2:end,:).*conj(z1(1:end-1,:))));
+R2=mean(mean(z2(2:end,:).*conj(z2(1:end-1,:))));
+reporttest('MATERNOISE lag-one autocovariance matches MATERNCOV for oscillatory Matern, Cholesky and fast',aresame(R1,R(2),0.05)&&aresame(R2,R(2),0.05))
 
 %N=1000;H=1/10;nu=2*H;
 %[z,err]=maternoise(1,N,10,alpha,H,nu,'fast','err');

@@ -77,6 +77,10 @@ end
 if nargin>6
     nu=varargin{7};
 end
+if length(varargin)==6&&strcmpi(model(1:3),'sta')
+    %For the standard model, the sixth argument is the frequency NU
+    nu=varargin{6};
+end
 
 if lambda==0
     C=fbm_matrix(dt,N,sigma,alpha,model);
@@ -214,4 +218,8 @@ end
 
 err=frac(sum(squared(G-G1),3),sum(squared(G),3));
 reporttest('MATERCHOL matches form of impulse response function to within 1%', allall(err<0.01))
+
+T=maternchol(1,20,1,1.5,0.1,0.5);
+[tau,R]=materncov(1,20,1,1.5,0.1,0.5);
+reporttest('MATERNCHOL oscillatory Matern covariance matches MATERNCOV', aresame(T*T',conj(toeplitz(R)),1e-10))
 %See MATERNOISE for computation of error term.
