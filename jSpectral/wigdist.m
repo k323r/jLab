@@ -46,7 +46,7 @@ end
 
 %/********************************************************
 %Zero-pad to increase frequency resolution
-if nargin==4
+if nargin>=4
   if isodd(N2)
     error('The new length M must be even.')
   end
@@ -209,6 +209,11 @@ t=1:size(d1,1);t=t-mean(t);
 tol=1e-10;
 b=aresame(d1,d2,tol)&&aresame(f1,f2);
 reporttest('WIGDIST two different algorithms match, positive and negative frequencies',b);
+
+[d1,f1]=wigdist(x,0,8,2*length(x),1);
+[d2,f2]=wigdist(x,0,8,2*length(x));
+b=aresame(size(d1),[2*length(x) 9])&&aresame(d1,d2,tol)&&aresame(f1,f2);
+reporttest('WIGDIST zero-padding applied when algorithm is specified',b);
 
 
 
