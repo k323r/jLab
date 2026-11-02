@@ -69,14 +69,10 @@ function[y]=trapint(f,dx,dim)
 
 fa=f;
 fb=vshift(fa,1,dim);
-fa=vindexinto(fa,0,1,dim);
 fa=vindexinto(fa,0,size(fa,dim),dim);
-fb=vindexinto(fb,0,1,dim);
 fb=vindexinto(fb,0,size(fb,dim),dim);
 
 % For the case of DIM=1, this becomes:
-% fa(1,:)=0;
-% fb(1,:)=0;
 % fa(end,:)=0;
 % fb(end,:)=0;
 y=vsum(frac(fa+fb,2),dim).*dx;
@@ -108,6 +104,10 @@ reporttest('PDFPROPS Gaussian skewness=0, kurtosis=3', bool(3));
 bool=aresame([mug,sigmag,skewg,kurtg],[mug2,sigmag2,skewg2,kurtg2],1e-10);
 
 reporttest('PDFPROPS calculation along alternate dimension', bool);
+
+x=(0:0.01:1)';
+[mu,sigma]=pdfprops(x,ones(size(x)));
+reporttest('PDFPROPS trapezoidal integration over full interval', aresame([mu sigma],[1/2 sqrt(1/12)],1e-4));
 
 
 
