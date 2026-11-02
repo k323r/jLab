@@ -49,7 +49,7 @@ function[upa,upb,upc,upd,upe,upf]=ellband(varargin)
 %          D   - Precession bandwidth with full 3D effects
 %          E   - Bandwidth due to motion of the normal to the plane
 %
-%   and these, in principle, satisfy UPSILON^2=A^2+B^2+C^2+D^2+|E|^2 where 
+%   and these, in principle, satisfy UPSILON^2=A^2+B^2+D^2+|E|^2 where 
 %   UPSILON is the joint instantaneous bandwidth of the trivariate signal.
 %   See below for a caveat on this statement.
 %
@@ -72,7 +72,7 @@ function[upa,upb,upc,upd,upe,upf]=ellband(varargin)
 %   for this, compare with the joint bandwidth from INSTMOM.
 %
 %   [A,B,C,D,E,UPSILON]=ELLBAND(KAPPA,LAMBDA,THETA,PHI,ALPHA,BETA) also 
-%   returns the total bandwith UPSILON=SQRT(A^2+B^2+C^2+D^2+|E|^2).
+%   returns the total bandwith UPSILON=SQRT(A^2+B^2+D^2+|E|^2).
 %
 %   For details see Lilly (2011).
 %   __________________________________________________________________
@@ -207,7 +207,7 @@ if dims==3
      numer=-omalpha.*sin(beta).*x+ombeta.*y;     
      denom=sqrt(abs(x).^2+abs(y).^2);
      upe=frac(numer,denom); 
-     upf=sqrt(upa.^2+upb.^2+upc.^2+upd.^2+abs(upe).^2);
+     upf=sqrt(upa.^2+upb.^2+upd.^2+abs(upe).^2);
      
      %Replace isolated nans that may have been lost
      upd(bool)=nan;
@@ -225,6 +225,7 @@ ellband_test1;
 ellband_test2;
 ellband_test3;
 ellband_test4;
+ellband_test5;
 
 
 function[]=ellband_test1
@@ -377,6 +378,21 @@ err=sort(err,'descend');
 err=err(20:end);
 %figure, plot([upbar upbar1])
 reporttest('ELLBAND trivariate case, sum of bandwith terms for Solomon Islands (removing worst outliers)',allall(err<0.05))
+
+function[]=ellband_test5
+%Ellipse precessing in a fixed tilted plane, for which D=C and E=0
+t=(0:1:925)';
+[kappa,lambda]=ab2kl(3+zeros(size(t)),2+zeros(size(t)));
+phi=(t/1000*5)*2*pi;
+theta=phi/14.45;
+alpha=pi/3+0*t;
+beta=pi/5+0*t;
+
+[x,y,z]=ellsig(kappa,lambda,theta,phi,alpha,beta);
+[a,om,ups]=instmom([x y z],1,2);
+[upsa,upsb,upsc,upsd,upse,upsf]=ellband(kappa,lambda,theta,phi,alpha,beta);
+b=aresame(vmean([ups upsd upsf]./[om om om],1),[1 1 1]*0.025,1e-4);
+reporttest('ELLBAND trivariate total bandwidth matches INSTMOM for precessing tilted ellipse',b)
 
 
 
