@@ -26,8 +26,8 @@ function[mult,ztot]=ridgemult(varargin)
 %
 %   Note that KR will take on one value along the entirety of any ridge.
 %
-%   MULT=RIDGERECON(IR,KR) and [MULT,ZHAT]=RIDGERECON(IR,KR,ZHAT) also 
-%   work in this case, where not MULT and ZHAT are also cell arrays.
+%   MULT=RIDGEMULT(IR,KR) and [MULT,ZTOT]=RIDGEMULT(IR,KR,ZHAT) also 
+%   work in this case, where now MULT and ZTOT are also cell arrays.
 %
 %   Usage: mult=ridgemult(ir);
 %          [mult,ztot]=ridgemult(ir,zhat);
@@ -37,16 +37,28 @@ function[mult,ztot]=ridgemult(varargin)
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2019--2021 J.M. Lilly --- type 'help jlab_license' for details
  
+if strcmpi(varargin{1}, '--t')
+    ridgemult_test,return
+end
+
 ir=varargin{1};
 bcell=iscell(ir);
 
+zhat=[];
 if bcell
-    ir=varargin{1};
     kr=varargin{2};
-    zhat=varargin{3};
+    if nargin>2
+        zhat=varargin{3};
+    end
 else
     kr=1+0*ir;
-    zhat=varargin{2};
+    if nargin>1
+        zhat=varargin{2};
+    end
+end
+
+if nargout==2&&isempty(zhat)
+    error('RIDGEMULT requires ZHAT for the second output argument.')
 end
 
 if ~bcell
@@ -64,13 +76,14 @@ irb=cellmax(ir);
 ks=cellfirst(kr);
 mult=ir;
 
-cell2col(ir,kr,zhat);
-if nargout==1
+cell2col(ir,kr);
+if nargout<2
     for i=1:length(ks)
         bool=(kr==ks(i));
         mult{i}=ridgemult_one(ira(i),irb(i),ir(bool));
     end
 else
+    cell2col(zhat);
     ztot=mult;
     for i=1:length(ks)
         bool=(kr==ks(i));
@@ -79,15 +92,46 @@ else
     end
 end
 
+if ~bcell
+    %Map from times back to the locations of the ridge points
+    index=find(~isnan(tempir));
+    jj=tempir(index)-ira+1;
+    temp=mult{1};
+    mult=nan(size(tempir));
+    mult(index)=temp(jj);
+    if nargout==2
+        temp=ztot{1};
+        ztot=nan(size(tempir));
+        ztot(index)=temp(jj);
+    end
+end
+
 
 function[mult,ztot]=ridgemult_one(ira,irb,ir,zhat)
 
 ybin=ira-1/2:1:irb+1/2;
 xbin=[-1/2 1/2]';
-if nargin==1
+if nargin==3
     mult=twodhist(0*ir,ir,xbin,ybin);
 else
     [zbar,~,~,mult]=twodstats(0*ir,ir,zhat,xbin,ybin);
     ztot=zbar.*mult;
 end
 
+function[]=ridgemult_test
+
+ir=[1;2;3;nan;2;3;nan];
+zhat=[1;1;1;nan;2;2;nan];
+mult=ridgemult(ir);
+[mult2,ztot]=ridgemult(ir,zhat);
+reporttest('RIDGEMULT column input',aresame(mult,[1 2 2 nan 2 2 nan]')&&aresame(mult2,mult)&&aresame(ztot,[1 3 3 nan 3 3 nan]'))
+
+ir={[1;2;3],[2;3],[5;6]};
+kr={[1;1;1],[1;1],[2;2]};
+zhat={[1;1;1],[2;2],[4;4]};
+mult=ridgemult(ir,kr);
+[mult2,ztot]=ridgemult(ir,kr,zhat);
+b=aresame(cell2col(mult),[1 2 2 nan 2 2 nan 1 1 nan]');
+b=b&&aresame(cell2col(mult2),cell2col(mult));
+b=b&&aresame(cell2col(ztot),[1 3 3 nan 3 3 nan 4 4 nan]');
+reporttest('RIDGEMULT cell array input',b)
