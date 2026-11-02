@@ -45,7 +45,9 @@ function[cv,zeta,n,s,p]=psi2fields(varargin)
 %   specifies the boundary conditions for derivatives at the domain edges.  
 %
 %   The default behavior for spatial derivatives is STR='periodic'.  Other
-%   choices are 'mirror' and 'zeros'.  See VDIFF for more details. 
+%   choices are 'mirror' and 'zeros', which reflect the field about the 
+%   edges or pad it with zeros, as in TIMESERIES_BOUNDARY, before taking 
+%   the central difference, and 'endpoint' and 'nans'; see VDIFF. 
 %   __________________________________________________________________
 %
 %   'psi2fields --t' runs some tests.
@@ -235,7 +237,19 @@ end
 % dim
 % size(f)
 % edgestr
-df=vdiff(dx,f,dim,edgestr);
+if strcmpi(edgestr(1:3),'mir')||strcmpi(edgestr(1:3),'zer')
+    %Extend by one point at both edges, then remove these points
+    fa=vindex(f,1,dim);
+    fb=vindex(f,size(f,dim),dim);
+    if strcmpi(edgestr(1:3),'zer')
+        fa=zeros(size(fa));
+        fb=zeros(size(fb));
+    end
+    df=vdiff(dx,cat(dim,fa,f,fb),dim);
+    df=vindex(df,2:size(df,dim)-1,dim);
+else
+    df=vdiff(dx,f,dim,edgestr);
+end
 
 
 function[]=psi2fields_test
@@ -330,4 +344,17 @@ reporttest('PSI2FIELDS matches source to 1 part in 10^9 for QGSNAPSHOT normal st
 
 bool=sum((S(:)-qgsnapshot.S(:)).^2)<sum(S(:).^2)/1e9;
 reporttest('PSI2FIELDS matches source to 1 part in 10^9 for QGSNAPSHOT shear strain',allall(bool))
+
+rng(1);
+xx=randn(8,6);
+cv=psi2fields(1,xx,'spatial','mirror');
+cv2=psi2fields(1,timeseries_boundary(timeseries_boundary(xx,1,'mirror'),2,'mirror'),'spatial');
+bool=aresame(cv,cv2(9:16,7:12),1e-10);
+cv=psi2fields(1,xx,'spatial','zeros');
+cv2=psi2fields(1,timeseries_boundary(timeseries_boundary(xx,1,'zeros'),2,'zeros'),'spatial');
+bool(2)=aresame(cv,cv2(9:16,7:12),1e-10);
+[cv,zeta]=psi2fields(1,xx,'spatial','mirror');
+[cv2,zeta2]=psi2fields(1,xx,'spatial','zeros');
+bool(3)=aresame(zeta(3:end-2,3:end-2),zeta2(3:end-2,3:end-2),1e-10);
+reporttest('PSI2FIELDS spatial mirror and zeros edge conditions',allall(bool))
 
