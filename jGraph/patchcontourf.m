@@ -29,6 +29,7 @@ function[h]=patchcontourf(varargin)
 %   mapping package, available at http://www.eos.ubc.ca/~rich/map.html.
 %
 %   'patchcontourf --f' generates a sample figure.
+%   'patchcontourf --t' runs a test.
 %
 %   Usage: patchcontourf(z,v);
 %          patchcontourf(z,v,c);
@@ -42,6 +43,8 @@ if strcmp(varargin{1}, '--f')
     type makefigs_patchcontourf
     makefigs_patchcontourf;
     return
+elseif strcmp(varargin{1}, '--t')
+    patchcontourf_test,return
 end
 
 
@@ -86,6 +89,9 @@ hold on
 h=[];
 if isempty(x)
     for i=1:length(ii)
+        %Subtract one to undo the padding of Z
+        ii{i}=ii{i}-1;
+        jj{i}=jj{i}-1;
         if strcmpi(flag(1:3),'m_m')
             m_patch(ii{i},jj{i},str,'edgecolor',str);
         else
@@ -117,4 +123,16 @@ if ~ishold
     hold off
 end
 
+function[]=patchcontourf_test
 
+[x,y]=meshgrid(1:20,1:15);
+z=exp(-((x-12).^2/18+(y-6).^2/8));
+c=contourc(z,[1/2 1/2]);
+hf=figure('visible','off');
+patchcontourf(z,1/2);
+h=findobj(gca,'type','patch');
+xp=get(h,'XData');
+yp=get(h,'YData');
+close(hf)
+bool=aresame([min(xp) max(xp) min(yp) max(yp)],[min(c(1,2:end)) max(c(1,2:end)) min(c(2,2:end)) max(c(2,2:end))],1e-10);
+reporttest('PATCHCONTOURF matches CONTOURC without X and Y',bool)
