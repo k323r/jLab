@@ -134,10 +134,10 @@ else  %Same exact thing but with parfor loop
 end
 
 
-x1=nonnan(cell2col(x1));
+x1=vertcat(x1{:});
 x1=reshape(x1,L,length(x1)/L);
 if nargout==2
-    x2=nonnan(cell2col(x2));
+    x2=vertcat(x2{:});
     x2=reshape(x2,L,length(x2)/L);
 end
 
@@ -176,4 +176,7 @@ reporttest('CELLCHUNK no overlap',allall(dnum==1))
 numc(1,2:end)-numc(100,1:end-1);%Should differ by 1 at L/2
 %figure,plot(numc)
 reporttest('CELLCHUNK with 50% overlap',allall(dnum==1))
+
+y=cellchunk({[1 2 nan 4 5 6]',[7 8 9]'},2);
+reporttest('CELLCHUNK NaNs in data are kept',aresame(y,[1 nan 5 7;2 4 6 8]))
 
