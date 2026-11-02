@@ -38,6 +38,8 @@ function[index,bool]=periodindex(varargin)
  
 if strcmp(varargin{1}, '--f')
    periodindex_fig,return
+elseif strcmpi(varargin{1}, '--t')
+   periodindex_test,return
 end
 
 % The first N periods, and last N periods, are both omitted from the index. 
@@ -65,6 +67,9 @@ else
     if ~any(isnan(om))
         index=periodindex_loop(dt,abs(om),N);
     else
+        if ~isnan(om(end))
+            om(end+1,1)=nan;
+        end
         [num,a,b]=blocknum(cumsum(isnan(om))); 
         a=a+1;a(1)=1;  %a is now heads of chunks
         om=col2cell(om);
@@ -77,12 +82,17 @@ else
     end
 end
 if nargout==2
-    bool=om;
-    for i=1:length(index)
-        bool{i}=false(size(bool{i}));
-        if ~isempty(index{i})
-            bool{i}(index{i})=true;
+    if iscell(varargin{1})
+        bool=om;
+        for i=1:length(index)
+            bool{i}=false(size(bool{i}));
+            if ~isempty(index{i})
+                bool{i}(index{i})=true;
+            end
         end
+    else
+        bool=false(size(varargin{1}));
+        bool(index)=true;
     end
 end
 
@@ -143,3 +153,13 @@ plot(2*pi./fr),hold on
 plot([1;index(1:end-1)],diff([1;index])*dt,'o')
 title('Difference between index points from PERIODINDEX for NPG dataset')
 
+function[]=periodindex_test
+
+om=0.3+zeros(100,1);
+[index,bool]=periodindex(om,1);
+reporttest('PERIODINDEX boolean output for array input',aresame(size(bool),size(om))&&aresame(find(bool),index))
+
+om=[0.3+zeros(50,1);nan;0.2+zeros(50,1)];
+index1=periodindex(om,1);
+index2=periodindex([om;nan],1);
+reporttest('PERIODINDEX segmented input without terminal NaN',aresame(index1,index2))
