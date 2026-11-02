@@ -73,7 +73,7 @@ ydata=varargin{2};
 zdata=varargin{3};
 
 if iscell(xdata)
-    [xdata,ydata,zdata]=cell2col(xdata,ydata,zdata);
+    [xdata,ydata,zdata]=cell2col(xdata,ydata,zdata,'nonans');
 end
 if ~isreal(xdata)||~isreal(ydata)||~isreal(zdata)
     error('X, Y, and Z must be real-valued.');
@@ -239,5 +239,11 @@ mat1=twodmed(xdata,ydata,zdata,xbin,ybin,'fast');
 mat2=twodmed(xdata,ydata,zdata,xbin,ybin,'slow');
 bool=aresame(mat1,mat2,1e-10);
 reporttest('TWODMED fast vs. slow algorithm, negative bins',bool)
+
+zdata(1:round(L/10):end)=nan;
+mat1=twodmed(xdata,ydata,zdata,xbin,ybin);
+mat2=twodmed({xdata(1:L/2),xdata(L/2+1:end)},{ydata(1:L/2),ydata(L/2+1:end)},{zdata(1:L/2),zdata(L/2+1:end)},xbin,ybin);
+bool=aresame(mat1,mat2,1e-10);
+reporttest('TWODMED cell vs. array input, with NANs',bool)
 
 

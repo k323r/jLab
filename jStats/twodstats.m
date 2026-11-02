@@ -128,7 +128,7 @@ ydata=varargin{2};
 zdata=varargin{3};
 
 if iscell(xdata)
-    [xdata,ydata,zdata]=cell2col(xdata,ydata,zdata);
+    [xdata,ydata,zdata]=cell2col(xdata,ydata,zdata,'nonans');
 end
 if ~aresame(size(xdata),size(ydata))
      error('X and Y should have the same size.')
@@ -537,6 +537,13 @@ if exist('histcounts2')==2
     reporttest('TWODSTATS HISTCOUNTS2 vs. JLAB algorithm, with negative bins and NANs, std',bool2)
     reporttest('TWODSTATS HISTCOUNTS2 vs. JLAB algorithm, with negative bins and NANs, num',bool3)
 end
+
+xcell={xdata(1:L/2),xdata(L/2+1:end)};
+ycell={ydata(1:L/2),ydata(L/2+1:end)};
+zcell={zdata(1:L/2),zdata(L/2+1:end)};
+[mat2,xmid,ymid,num2,std2]=twodstats(xcell,ycell,zcell,xbin,ybin);
+bool=aresame(mat1,mat2,1e-10)&&aresame(std1,std2,1e-10)&&aresame(num1,num2,1e-10);
+reporttest('TWODSTATS cell vs. array input, with NANs',bool)
 
 function[]=twodstats_test3
 
