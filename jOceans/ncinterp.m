@@ -60,12 +60,18 @@ function[varargout]=ncinterp(varargin)
 %   is within one latitude spacing interval of the pole. 
 %   __________________________________________________________________
 %
+%   'ncinterp --t' runs a test.
+%
 %   Usage: x=ncinterp(filename,num,lat,lon,varname);
 %          [x1,x2]=ncinterp(filename,num,lat,lon,varname1,varname2);
 %   __________________________________________________________________
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2016--2021 J.M. Lilly --- type 'help jlab_license' for details
  
+if strcmp(varargin{1}, '--t')
+    ncinterp_test,return
+end
+
 filename=varargin{1};
 numi=varargin{2};
 lati=varargin{3};
@@ -213,7 +219,7 @@ for i=a:maxN:b
     disp(['NCINTERP reading chunk ' int2str(n) ' of ' int2str(length(a:maxN:b)) '.'])
     if n==1
         %Initialize xp
-        xp=double(ncread(filename,varname,[1 1 1],[inf inf 1]));
+        xp=double(ncread(filename,varname,[1 1 a-1],[inf inf 1]));
         if blatdown,xp=[xp(:,1) xp];end    %Extra column for southern latitudes
         if blatup,  xp=[xp xp(:,end)];end  %Extra column for northern latitudes
     else
@@ -283,7 +289,7 @@ for i=a:N:b
     disp(['NCINTERP reading chunk ' int2str(n) ' of ' int2str(length(a:N:b)) '.'])
     if n==1
         %Initialize xp
-        xp=double(ncread(filename,varname,[1 1 1],[inf inf 1]));
+        xp=double(ncread(filename,varname,[1 1 a-1],[inf inf 1]));
         if blatdown,xp=[xp(1,:);xp];end    %Extra row for southern latitudes
         if blatup,  xp=[xp;xp(end,:)];end  %Extra row for northern latitudes
     else
@@ -331,7 +337,7 @@ xk(bool)=inf;
 
 function[xk]=ncinterp_one_loop_lonlat(filename,num,lat,lon,numi,lati,loni,varname,blatup,blatdown,bperiodic,a,b)
 
-xn=double(ncread(filename,varname,[1 1 1],[inf inf 1]));
+xn=double(ncread(filename,varname,[1 1 a-1],[inf inf 1]));
 xk=nan*zeros(size(numi));
 for i=a:b
     disp(['NCINTERP reading time ' int2str(i-a+1) ' of ' int2str(b-a+1) '.'])
@@ -371,7 +377,7 @@ xk(bool)=inf;
 
 function[xk]=ncinterp_one_loop(filename,num,lat,lon,numi,lati,loni,varname,blatup,blatdown,bperiodic,a,b)
 
-xn=double(ncread(filename,varname,[1 1 1],[inf inf 1]));
+xn=double(ncread(filename,varname,[1 1 a-1],[inf inf 1]));
 xk=nan*zeros(size(numi));
 for i=a:b
     disp(['NCINTERP reading time ' int2str(i-a+1) ' of ' int2str(b-a+1) '.'])
@@ -407,6 +413,32 @@ end
 
 bool=isnan(xk)&~isnan(lati);
 xk(bool)=inf;
+
+function[]=ncinterp_test
+
+lon=(0:10:40)';lat=(0:10:30)';num=(1:10)';
+numi=linspace(3.5,9.5,30)';lati=linspace(1,29,30)';loni=linspace(39,1,30)';
+for i=1:2
+    filename=[tempname '.nc'];
+    nccreate(filename,'lon','Dimensions',{'lon',length(lon)});ncwrite(filename,'lon',lon);
+    nccreate(filename,'lat','Dimensions',{'lat',length(lat)});ncwrite(filename,'lat',lat);
+    nccreate(filename,'num','Dimensions',{'num',length(num)});ncwrite(filename,'num',num);
+    if i==1
+        str='regular';
+        x=reshape(sin(1:length(lat)*length(lon)*length(num)),length(lat),length(lon),length(num));
+        nccreate(filename,'x','Dimensions',{'lat',length(lat),'lon',length(lon),'num',length(num)});
+        x0=interpn(lat,lon,num,x,lati,loni,numi);
+    else
+        str='transpose';
+        x=reshape(sin(1:length(lon)*length(lat)*length(num)),length(lon),length(lat),length(num));
+        nccreate(filename,'x','Dimensions',{'lon',length(lon),'lat',length(lat),'num',length(num)});
+        x0=interpn(lon,lat,num,x,loni,lati,numi);
+    end
+    ncwrite(filename,'x',x);
+    x1=ncinterp(filename,numi,lati,loni,'x',str,'loop');
+    delete(filename)
+    reporttest(['NCINTERP loop algorithm matches INTERPN for times after the third slice, ' str ' order'],aresame(x1,x0,1e-10))
+end
 
 %tic;uwnd1=ncinterp('gom_ccmp_winds.nc',num,lat,lon,'uwnd');toc
 %tic;uwnd2=ncinterp('gom_ccmp_winds.nc',num,lat,lon,'uwnd','loop');toc
