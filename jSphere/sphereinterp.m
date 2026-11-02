@@ -375,8 +375,8 @@ else
     iishift(bool)=0;
 end
 
-bool=(jj+jjshift==size(lato,2)+1)|(jj+jjshift==0);
-jjshift(bool)=size(lato,1);
+bool=(jj+jjshift==size(lato,1)+1)|(jj+jjshift==0);
+jjshift(bool)=0;
 %--------------------------------------------------------------------------
 
 % minmin(ii+iishift)
@@ -460,3 +460,11 @@ tic;znearest=interp2(lono,lato,zo,long,latg,'nearest');toc
 tic;zlinear=interp2(lono,lato,zo,long,latg,'linear');toc
 
 reporttest('SPHEREINTERP compare with INTERP2 for plaid grid, encompassing dateline',aresame(zlin,zlinear,1e-10))
+
+%Grid with more rows than columns, target points between the last rows
+[lono,lato]=meshgrid(0:9,0:19);
+lat=[4.3 9.3 12.6 18.5];lon=[4.5 7.75 8 8.5];
+[dx,dy,index,bool]=sphereinterp(lato,lono,lat,lon);
+[long,latg]=meshgrid(lon,lat);
+z=sphereinterp(dx,dy,index,bool,lato);
+reporttest('SPHEREINTERP grid with more rows than columns',aresame(z,latg,1e-10))
