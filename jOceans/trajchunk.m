@@ -141,6 +141,8 @@ if ~iscell(lat)
     %Create ii index 
     varargin{na+1}=[1:length(lat)]';
     index=trajchunk_index(num,lat,N,M,opt,factor);
+    varargout=cell(1,na+1);
+    varargout(:)={cell(0,1)};  %In case there are no chunks
     n=0;
     if ~isempty(index)
         for k=1:length(index)
@@ -176,6 +178,8 @@ else
         end
         index{i,1}=trajchunk_index(num{i},lat{i},N,M,opt,factor);
     end     
+    varargout=cell(1,na);
+    varargout(:)={cell(0,1)};  %In case there are no chunks
     n=0;
     for i=1:length(lat)
         if ~isempty(index{i})
@@ -254,8 +258,10 @@ else
         end
     elseif strcmpi(opt(1:3),'ful')
         indexlast=trajchunk_index(num,flipud(lat),N,M,'nokeep',1);
-        indexlast=length(lat)-flipud(indexlast{1})+1;
-        index{end+1}=indexlast;
+        if ~isempty(indexlast)  %Discard trajectories too short for a chunk
+            indexlast=length(lat)-flipud(indexlast{1})+1;
+            index{end+1}=indexlast;
+        end
         %maxmax(indexlast),length(lat)
     end
 end
@@ -278,6 +284,23 @@ trajchunk(num,lat,lon,32,'overlap',50);
 meanfo=vmean(abs(corfreq(col2mat(cell2col(lat)))),1)'*24*dt;
 fr=frac(2*pi,dt*cellength(lat));
 reporttest('TRAJCHUNK overlap',allall(meanfo>32*fr))
+
+use ebasnfloats
+bool=false(length(num),1);
+for i=1:length(num)
+    numo=trajchunk(num(i),lat(i),32,'full');
+    numo2=trajchunk(num(i),lat(i),32);
+    if isempty(numo2)
+        bool(i)=isempty(numo);  %Short trajectories are discarded
+    else
+        bool(i)=(length(numo)==length(numo2)+1)&&(numo{end}(end)==num{i}(end));
+    end
+end
+bool=allall(bool)&&~isempty(trajchunk(num(1:12),lat(1:12),32,'full'));
+[numo,lato]=trajchunk((1:10)',45+zeros(10,1),1000);
+[numo2,lato2,x2]=trajchunk({(1:10)';(1:10)'},{45+zeros(10,1);45+zeros(10,1)},[7;8],1000);
+bool(2)=isempty(numo)&&iscell(numo)&&isempty(lato2)&&isempty(x2)&&isnumeric(x2);
+reporttest('TRAJCHUNK full option with short trajectories, and input without chunks',allall(bool))
 
 % load drifterheyerdahl
 % use drifterheyerdahl
