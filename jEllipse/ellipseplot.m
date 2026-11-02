@@ -145,6 +145,8 @@ if strcmpi(varargin{1},'--f')
    type makefigs_ellipseplot
    makefigs_ellipseplot;
    return
+elseif strcmpi(varargin{1},'--t')
+   ellipseplot_test,return
 end
 
 %/********************************************************
@@ -152,7 +154,7 @@ end
 na=length(varargin);
 
 k=varargin{1};
-l=real(varargin{2});
+l=varargin{2};
 th=varargin{3};
 
 sty{1}='T';
@@ -190,7 +192,7 @@ while naold~=na
         na=na-1;     
     end
        
-    if iscell(varargin{end})&&~strcmpi(varargin{end-1}(1:3),'ind')
+    if iscellstr(varargin{end})&&~isempty(varargin{end})
        sty=varargin{end};
        varargin=varargin(1:end-1);
        na=na-1;  
@@ -219,7 +221,7 @@ end
 
 if ~iscell(k)
     k=k(:);
-    l=l(:);
+    l=real(l(:));
     th=th(:);
     if ~isempty(x)
         x=x(:);
@@ -277,7 +279,12 @@ if iscell(k)
     for i=1:length(k)
         %vsize(k{i},l{i},th{i},phi{i},x{i},ar1,ar2,baxis,npoints,str,index,skip,sty)
         if ~isempty(k{i})
-            [h{i},indexout{i}]=ellipseplot_loop(k{i},l{i},th{i},phi{i},x{i},ar1,ar2,npoints,str,index{i},skip,scale);
+            if iscell(index)
+                indexi=index{i};
+            else
+                indexi=index;
+            end
+            [h{i},indexout{i}]=ellipseplot_loop(k{i},real(l{i}),th{i},phi{i},x{i},ar1,ar2,npoints,str,indexi,skip,scale);
         else
             h{i}=[];
             indexout{i}=[];
@@ -325,6 +332,8 @@ if verLessThan('matlab','8.4.0')
         h2=h;
     end
     set(h2(~isnan(h2)),'visible','on')
+elseif iscell(h)
+    set(vertcat(h{:}),'visible','on')
 else
     set(h,'visible','on')
 end
@@ -437,3 +446,16 @@ end
 %     ellipseplot(kappa,lambda,theta,lono+sqrt(-1)*lato(i)+0*kappa,latratio(lato(i)),'skip',100,'scale',1,'m_map');
 % end
 
+function[]=ellipseplot_test
+
+hf=figure('visible','off');
+h1=ellipseplot({[1;2],[],3},{[0.5;0.2],[],0.1},{[0;1],[],2},{[0;5],[],10});
+h1=vertcat(h1{:});
+h2=ellipseplot([1;2;3],[0.5;0.2;0.1],[0;1;2],[0;5;10]);
+b=length(h1)==3&&length(h2)==3;
+if b
+    b=aresame(cell2mat(get(h1,'xdata')),cell2mat(get(h2,'xdata')))&&...
+        aresame(cell2mat(get(h1,'ydata')),cell2mat(get(h2,'ydata')));
+end
+close(hf)
+reporttest('ELLIPSEPLOT cell array input matches array input',b)
