@@ -62,6 +62,8 @@ function[h]=cellplot(varargin)
 %
 %   See also LINESTYLE.
 %
+%   'cellplot --t' runs a test.
+%
 %   Usage: cellplot(x)
 %          cellplot(x,y)
 %          h=cellplot(x,y,index,'m_map');
@@ -70,6 +72,10 @@ function[h]=cellplot(varargin)
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2008--2016 J.M. Lilly --- type 'help jlab_license' for details
  
+if strcmp(varargin{1}, '--t')
+    cellplot_test,return
+end
+
 linestr=[];
 str='matlab';
 
@@ -162,6 +168,15 @@ if ~isempty(x)
             if ~isempty(z);
                  z=col2cell(mat2col(z));
             end
+        elseif size(x,2)==1&&~isnan(x(end))
+            %Terminate the last segment of a column with a NaN
+            x(end+1)=nan;
+            if ~isempty(y);
+                 y(end+1)=nan;
+            end
+            if ~isempty(z);
+                 z(end+1)=nan;
+            end
         end
     end
     
@@ -244,3 +259,12 @@ if ~holdstate
     hold off
 end
 
+function[]=cellplot_test
+
+hf=figure('visible','off');
+h=cellplot([1 2 nan 3 4]',[5 6 nan 7 8]');
+bool=length(h)==2&&aresame(get(h(2),'XData'),[3 4])&&aresame(get(h(2),'YData'),[7 8]);
+h=cellplot((1:10)');
+bool=bool&&length(h)==1&&aresame(get(h,'YData'),1:10);
+close(hf)
+reporttest('CELLPLOT column without terminating NaN',bool)
