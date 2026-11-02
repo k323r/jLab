@@ -65,7 +65,7 @@ if nargout>2
      else
         k=zeros(size(m));
         for i=1:length(m)
-            k(i)=kcell{i};
+            k(i)=kcell{p(i)+1};
         end
      end
 end
@@ -81,7 +81,7 @@ if nargout>3
      else
         l=zeros(size(m));
         for i=1:length(m)
-            l(i)=lcell{i};
+            l(i)=lcell{p(i)+1};
         end
      end
 end
@@ -225,6 +225,12 @@ k3b=2*frac(m1.^3,mo.^3)-3.*frac(m1,mo).*frac(m2,mo)+frac(m3,mo);
 
 
 reporttest('MORSEMOM first three cumulants',aresame(ko,kob,1e-10)&&aresame(k1,k1b,1e-10)&&aresame(k2,k2b,1e-10)&&aresame(k3,k3b,1e-10))
+
+[m,n,k,l]=morsemom([3 1 2],3,4);
+[m3,n3,k3,l3]=morsemom(3,3,4);
+[m1,n1,k1,l1]=morsemom(1,3,4);
+[m2,n2,k2,l2]=morsemom(2,3,4);
+reporttest('MORSEMOM cumulants for array-valued P',aresame(k,[k3 k1 k2],1e-10)&&aresame(l,[l3 l1 l2],1e-10))
 
 function[]=morsemom_test_alternate
 %Test alternate expressions for the energy moments
