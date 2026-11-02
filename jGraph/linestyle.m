@@ -60,7 +60,7 @@ function[]=linestyle(varargin)
   
 if nargin==1
     if strcmpi(varargin{1},'--t')
-        return
+        linestyle_test,return
     end
 end
 
@@ -244,6 +244,7 @@ end
 colorcell=colorcell(1:N)';
 stylecell=stylecell(1:N)';
 widthcell=widthcell(1:N)';
+[stylecell,markercell]=linestylemarker(stylecell);
 
 locked=0;      %Check to see if current figures axes are locked
 if isappdata(gcf,'linestylelock')
@@ -258,6 +259,7 @@ if ~locked || bhandleinput    %Just apply to current axes
   linering(1*sqrt(-1));%Go to first position in linering
   set(h(boolline),{'color'},colorcell(boolline),{'linewidth'},widthcell(boolline),{'linestyle'},stylecell(boolline))
   set(h(boolpatch),{'edgecolor'},colorcell(boolpatch),{'linewidth'},widthcell(boolpatch),{'linestyle'},stylecell(boolpatch))
+  linestylesetmarker(h,markercell,boolline|boolpatch)
   linering(num*sqrt(-1));%Return to original
 elseif locked && (~bhandleinput)
   h1=axeshandles(gcf);	
@@ -267,11 +269,37 @@ elseif locked && (~bhandleinput)
        [boolline,boolpatch]=handletype(h);
        set(h(boolline),{'color'},colorcell(boolline),{'linewidth'},widthcell(boolline),{'linestyle'},stylecell(boolline))
        set(h(boolpatch),{'edgecolor'},colorcell(boolpatch),{'linewidth'},widthcell(boolpatch),{'linestyle'},stylecell(boolpatch))
+       linestylesetmarker(h,markercell,boolline|boolpatch)
        linering(num*sqrt(-1));%Return to original
   end
 end
 
 axes(axes_original)
+
+function[stylecell,markercell]=linestylemarker(stylecell)
+%Separate marker characters, such as '.' or 'o', from the line style
+markercell=cell(size(stylecell));
+for i=1:length(stylecell)
+    str=deblank(stylecell{i});
+    bool=ismember(str,'.ox+*sdv^<>ph');
+    bool(strfind(str,'-.')+1)=false;  %'.' in '-.' is part of the line style
+    if any(bool)
+        markercell{i}=str(find(bool,1));
+        str=str(~bool);
+        if isempty(str)
+            str='none';
+        end
+    end
+    stylecell{i}=str;
+end
+
+function[]=linestylesetmarker(h,markercell,bool)
+%Set markers only where one is specified
+for j=1:min(length(h),length(markercell))
+    if bool(j)&&~isempty(markercell{j})
+        set(h(j),'marker',markercell{j})
+    end
+end
 
 function[boolline,boolpatch]=handletype(h)
 
@@ -392,7 +420,11 @@ end
 %kludge
 %h=flipud(h);
 if ~isempty(widthcell),set(h,{'linewidth'},widthcell'),end
-if ~isempty(stylecell),set(h,{'linestyle'},stylecell'),end
+if ~isempty(stylecell)
+    [stylecelli,markercell]=linestylemarker(stylecell);
+    set(h,{'linestyle'},stylecelli')
+    linestylesetmarker(h,markercell,true(size(h)))
+end
 if ~isempty(colorcell),set(h,{'color'},colorcell'),end
 
 
@@ -450,3 +482,22 @@ linestyles.redgreenblue={'rgb',['-';'-';'-'],[1 1 1]};
 linestyles.dots={'bgrcmyk','.',1};
 linestyles.graydots={'D','.',1};
 
+function[]=linestyle_test
+
+hfig=figure;
+plot([1:3;2:4;3:5]')
+h=flipud(linehandles(gca));
+linestyle dots
+reporttest('LINESTYLE dots sets marker, not line style',...
+    all(strcmpi(get(h,'linestyle'),'none'))&&all(strcmpi(get(h,'marker'),'.'))...
+    &&aresame(get(h(2),'color'),[0 0.5 0]))
+linestyle graydots
+reporttest('LINESTYLE graydots sets marker, not line style',...
+    all(strcmpi(get(h,'linestyle'),'none'))&&all(strcmpi(get(h,'marker'),'.'))...
+    &&aresame(get(h(1),'color'),[0.7 0.7 0.7],1e-10))
+linestyle 2ro r-x k-.
+reporttest('LINESTYLE marker and line style in strings',...
+    strcmpi(get(h(1),'linestyle'),'none')&&strcmpi(get(h(1),'marker'),'o')&&get(h(1),'linewidth')==2 ...
+    &&strcmpi(get(h(2),'linestyle'),'-')&&strcmpi(get(h(2),'marker'),'x')...
+    &&strcmpi(get(h(3),'linestyle'),'-.')&&aresame(get(h(3),'color'),[0 0 0]))
+close(hfig)
