@@ -130,6 +130,7 @@ end
 for i=1:length(varargin)
     [temp,varargout{i}]=cell2col(bool,varargout{i});
     temp(isinf(temp))=nan;  %Because cell2col replaces pre-existing nans
+    varargout{i}(isinf(varargout{i}))=nan;  %Same for the data
     [temp,varargout{i}]=col2mat(temp,varargout{i});
     
     %Remove segments that lie outside
@@ -179,6 +180,9 @@ region=[-30 -21 24 35];
 [lat1,lon1,lon2,lat2]=trajextract(lat,lon,lon,lat,region);
 
 reporttest('TRAJEXTRACT additional input arguments',aresame(cell2col(lat1),cell2col(lat2),1e-8)&&aresame(cell2col(lon1),cell2col(lon2),1e-8))
+
+[lat1,lon1,x1]=trajextract({[10 10 10 10]'},{(0:3)'},{[1 nan 3 4]'},[-5 20 -1 20],1);
+reporttest('TRAJEXTRACT NaNs in additional input arguments are preserved',aresame(x1,{[1 nan 3 4]'}))
  
 
  
