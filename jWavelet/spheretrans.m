@@ -28,9 +28,10 @@ function[wxh,wyh]=spheretrans(varargin)
  
 if strcmp(varargin{1}, '--t')
     %spheretrans_test;hor2uvw_test;uvw2hor_test,return
-    hor2uvw_test;uvw2hor_test,return
+    hor2uvw_test;uvw2hor_test;spheretrans_test_radius,return
 end
  
+R=radearth;
 if ~iscell(varargin{1})&&length(varargin{1})==1
     R=varargin{1};
     varargin=varargin(2:end);
@@ -59,11 +60,11 @@ end
 
 if ~iscell(lon)
     lon=frac(360,2*pi)*unwrap(frac(2*pi,360)*lon);
-    [x,y,z]=latlon2xyz(lat,lon);%Position as a 3-vector with origin at center of earth
+    [x,y,z]=latlon2xyz(lat,lon,R);%Position as a 3-vector with origin at center of earth
 else
     for i=1:length(lon)
         lon{i}=frac(360,2*pi)*unwrap(frac(2*pi,360)*lon{i});
-        [x{i},y{i},z{i}]=latlon2xyz(lat{i},lon{i});%Position as a 3-vector with origin at center of earth
+        [x{i},y{i},z{i}]=latlon2xyz(lat{i},lon{i},R);%Position as a 3-vector with origin at center of earth
     end
 end
 
@@ -218,6 +219,16 @@ vh=randn(size(latg));
 
 tol=1e-10;
 %reporttest('HOR2UVW plus UVW2SPHERE for vanishing w',aresame(uh,v2,tol)&&aresame(vh,v3,tol)&&aresame(v1,0*v1,tol))
+
+function[]=spheretrans_test_radius
+
+rng(1);
+lat=10+cumsum(randn(256,1))/100;
+lon=20+cumsum(randn(256,1))/100;
+[wx,wy]=spheretrans(lat,lon,{3,4,2*pi/20});
+[wx2,wy2]=spheretrans(1000,lat,lon,{3,4,2*pi/20});
+tol=1e-10;
+reporttest('SPHERETRANS transform scales with radius R',aresame(wx2,frac(1000,radearth)*wx,tol)&&aresame(wy2,frac(1000,radearth)*wy,tol))
 
 function[]=spheretrans_test
 
