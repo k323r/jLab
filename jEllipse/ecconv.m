@@ -85,7 +85,7 @@ str1=str(1:strfind(str,'2')-1);
 str2=str(strfind(str,'2')+1:end);
 if aresame(str1,'circ')&&~aresame(str2,'circ')
     lin=sign(x).*sqrt(1-x.^2);
-    eval(['y=lin2' str2 '(x);'])
+    eval(['y=lin2' str2 '(lin);'])
 elseif ~aresame(str1,'circ')&&aresame(str2,'circ')
     eval(['lin=' str1 '2lin(x);'])
     y=sign(lin).*sqrt(1-lin.^2);
@@ -238,6 +238,11 @@ for i=1:size(x2,2)
 end
 
 reporttest('ECCONV', allall(bool))
+
+b=(rand(100,1)*2-1)*0.9;
+circ=frac(2*b,1+squared(b));
+lin=sign(b).*frac(1-squared(b),1+squared(b));
+reporttest('ECCONV circularity to linearity and ellipticity', aresame(ecconv(circ,'circ2lin'),lin,1e-10)&&aresame(ecconv(circ,'circ2ell'),b,1e-10))
 %\********************************************************
 
 
