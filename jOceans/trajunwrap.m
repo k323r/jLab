@@ -21,6 +21,8 @@ function[varargout]=trajunwrap(varargin)
 %
 %   See also TRAJWRAP.
 %
+%   'trajunwrap --t' runs a test.
+%
 %   Usage: cx=trajunwrap(cx,L);
 %          cx=trajunwrap(cx,[Lx Ly],'nan');
 %          cx=trajunwrap(cx,[Lx Ly]);
@@ -29,6 +31,10 @@ function[varargout]=trajunwrap(varargin)
 %   __________________________________________________________________
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2014--2015 J.M. Lilly --- type 'help jlab_license' for details
+ 
+if strcmpi(varargin{1}, '--t')
+    trajunwrap_test,return
+end
  
 na=nargin;
 L=varargin{end};
@@ -60,7 +66,7 @@ if ~isnan(Lx)
     x=frac(Lx,pi)*unwrap(frac(pi,Lx)*real(z),[],1);
 end
 if ~isnan(Ly)
-    y=frac(Ly,pi)*unwrap(frac(pi,Lx)*imag(z),[],1);
+    y=frac(Ly,pi)*unwrap(frac(pi,Ly)*imag(z),[],1);
 end
 
 zw=x+sqrt(-1)*y;
@@ -73,4 +79,7 @@ zw=x+sqrt(-1)*y;
 %     zw(bool)=nan;
 % end
 
-
+function[]=trajunwrap_test
+ 
+cx=trajunwrap([1+1i;2+2i;-2.5-0.5i],[3 6]);
+reporttest('TRAJUNWRAP different X and Y periodicities',aresame(cx,[1+1i;2+2i;3.5-0.5i],1e-10))
