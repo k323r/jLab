@@ -29,6 +29,7 @@ function[h]=patchcontourf(varargin)
 %   mapping package, available at http://www.eos.ubc.ca/~rich/map.html.
 %
 %   'patchcontourf --f' generates a sample figure.
+%   'patchcontourf --t' runs a test.
 %
 %   Usage: patchcontourf(z,v);
 %          patchcontourf(z,v,c);
@@ -42,6 +43,8 @@ if strcmp(varargin{1}, '--f')
     type makefigs_patchcontourf
     makefigs_patchcontourf;
     return
+elseif strcmp(varargin{1}, '--t')
+    patchcontourf_test,return
 end
 
 
@@ -99,7 +102,7 @@ else
     
     dy1=y(2)-y(1);
     dyN=y(end-1)-y(end);
-    y=[y(1)-dy1;y;y(end)-dyN];
+    y=[y(1)-dy1;y(:);y(end)-dyN];
     
     for i=1:length(ii)
         x1=interp1(1:length(x),x,ii{i},'linear');
@@ -116,5 +119,21 @@ end
 if ~ishold 
     hold off
 end
+
+function[]=patchcontourf_test
+
+x=(1:20)/2;
+y=(1:15)/3;
+[xg,yg]=meshgrid(x,y);
+z=exp(-((xg-6).^2/4+(yg-2).^2));
+c=contourc(x,y,z,[1/2 1/2]);
+hf=figure('visible','off');
+patchcontourf(x,y,z,1/2);
+h=findobj(gca,'type','patch');
+xp=get(h,'XData');
+yp=get(h,'YData');
+close(hf)
+bool=aresame([min(xp) max(xp) min(yp) max(yp)],[min(c(1,2:end)) max(c(1,2:end)) min(c(2,2:end)) max(c(2,2:end))],1e-10);
+reporttest('PATCHCONTOURF matches CONTOURC with row vectors X and Y',bool)
 
 
