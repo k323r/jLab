@@ -91,7 +91,7 @@ elseif na==6
          [x,y,z]=ellsig_3D_one(k,l,theta,phi,alpha,beta,str);
     else
         for i=1:length(k)
-             [x{i,1},y{i,1},z{i,1}]=ellsig_2D_one(k{i},l{i},theta{i},phi{i},alpha{i},beta{i},str);
+             [x{i,1},y{i,1},z{i,1}]=ellsig_3D_one(k{i},l{i},theta{i},phi{i},alpha{i},beta{i},str);
         end
     end  
 end
@@ -168,5 +168,8 @@ z2=z*nan;
 [z2(:,1),z2(:,2),z2(:,3)]=ellsig(kappa,lambda,theta,phi,alpha,beta);
    
 reporttest('ELLSIG exactly inverts ELLPARAMS for trivariate case, Solomon Islands',aresame(z,z2,2e-7))
+
+[x3,y3,z3]=ellsig({kappa,kappa},{lambda,lambda},{theta,theta},{phi,phi},{alpha,alpha},{beta,beta});
+reporttest('ELLSIG trivariate cell array input',length(x3)==2&&aresame([x3{2} y3{2} z3{2}],z2,1e-10))
 
 
