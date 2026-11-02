@@ -91,8 +91,8 @@ h=z(:,1:N,:,:);
 zp(M+1:M+size(z,1),N+1:N+size(z,2),:,:)=z;
 zp(1:M,N+1:size(z,2)+N,:,:)=g;
 zp(end-M+1:end,N+1:size(z,2)+N,:,:)=e;
-zp(M+1:size(z,2)+M,1:N,:,:)=f;
-zp(M+1:size(z,2)+M,end-N+1:end,:)=h;
+zp(M+1:size(z,1)+M,1:N,:,:)=f;
+zp(M+1:size(z,1)+M,end-N+1:end,:,:)=h;
 
 %Corners ordered clockwise from top left
 a=z(1:M,1:N,:,:);
@@ -109,10 +109,10 @@ zp(end-M+1:end,1:N,:,:)=b;
 
 if nargout>1
     xp=zeros(length(x)+2*N,1);
-    yp=zeros(length(x)+2*M,1);
+    yp=zeros(length(y)+2*M,1);
     
-    xp(N+1:N+size(z,1))=x;
-    yp(M+1:M+size(z,2))=y;
+    xp(N+1:N+size(z,2))=x;
+    yp(M+1:M+size(z,1))=y;
     
     dx=x(2)-x(1);
     dy=y(2)-y(1);
@@ -138,4 +138,11 @@ reporttest('PERIODIZE no discontinutities in XE, YE, or FP',allall(bool))
 [xp,yp,fp1,fp2]=periodize(100,200,qgsnapshot.x,qgsnapshot.y,qgsnapshot.psi,qgsnapshot.psi);
 
 reporttest('PERIODIZE multiple input/output periodizations',aresame(fp1,fp2))
+
+z=reshape(1:12,3,4);
+[xp,yp,fp]=periodize((1:4)',(1:3)',z);
+[xe,ye,fe]=periodize(1,2,(1:4)',(1:3)',z);
+bool=aresame(fp,repmat(z,3,3))&&aresame(xp,(-3:8)')&&aresame(yp,(-2:6)');
+bool=bool&&aresame(fe,fp(2:8,4:9))&&aresame(xe,(0:5)')&&aresame(ye,(-1:5)');
+reporttest('PERIODIZE non-square array',bool)
 
