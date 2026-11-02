@@ -510,11 +510,11 @@ values(4,:)=range.mu;
 values(5,:)=range.nu;
 values(6,:)=range.epsilon;
 if ~isempty(value.sigma),   values(1,:)=value.sigma;end
-if ~isempty(value.alpha),   values(1,:)=value.alpha;end
-if ~isempty(value.lambda),  values(1,:)=value.lambda;end
-if ~isempty(value.mu),      values(1,:)=value.mu;end
-if ~isempty(value.nu),      values(1,:)=value.nu;end
-if ~isempty(value.epsilon), values(1,:)=value.epsilon;end
+if ~isempty(value.alpha),   values(2,:)=value.alpha;end
+if ~isempty(value.lambda),  values(3,:)=value.lambda;end
+if ~isempty(value.mu),      values(4,:)=value.mu;end
+if ~isempty(value.nu),      values(5,:)=value.nu;end
+if ~isempty(value.epsilon), values(6,:)=value.epsilon;end
 %Have to convert this to numeric values because I can't pass a structure
 %through to the workers, for some unknown reason
 %--------------------------------------------------------------------------
@@ -1041,6 +1041,10 @@ bool(2)=aresame(fit.alpha,fit2.alpha,1e-4);
 bool(3)=aresame(fit.lambda,fit2.lambda,1e-4);
 
 reporttest('MATERNFIT is independent of initial guess',allall(bool))
+
+fit3=maternfit(dt,z,frac(1,2)*pi,'value.alpha',2);
+bool=aresame(fit3.range.alpha,[2 2 2])&&aresame(fit3.alpha,2)&&fit3.range.sigma(1)<fit3.range.sigma(3);
+reporttest('MATERNFIT value.alpha fixes ALPHA, not SIGMA',bool)
 
 rng(0);
 epsilono=2;
