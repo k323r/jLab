@@ -100,8 +100,11 @@ for i=1:length(bool)
     
     if length(bool{i})>1     
        bool{i}=bool{i}+0;  %Convert logical to numeric
-       %Mark locations where the next point is out of the region
-       bool{i}(find(bool{i}(1:end-1)&~bool{i}(2:end))+1)=nan;
+       %Mark locations where the next point is out of the region, and
+       %where the next point re-enters the region
+       iout=find(bool{i}(1:end-1)&~bool{i}(2:end))+1;
+       iin=find(~bool{i}(1:end-1)&bool{i}(2:end));
+       bool{i}([iout(:);iin(:)])=nan;
     end
 end
 
@@ -154,6 +157,9 @@ end
 eval(to_overwrite(length(varargin)));
 
 function[]=trajextract_test
+[lat1,lon1]=trajextract({[10 10 10 30 30 10 10 10 30 10 10 10]'},{(0:11)'},[-5 20 0 20],0);
+reporttest('TRAJEXTRACT segments re-entering region',aresame(lon1,{(0:2)',(5:7)',(9:11)'}'))
+
 load ebasnfloats
 use ebasnfloats
 
